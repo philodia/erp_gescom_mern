@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rappel de Paiement pour la Facture {{facture.numero}}</title>
+    <style>
+        body { margin: 0; padding: 0; background-color: #f4f4f4; font-family: Arial, sans-serif; }
+        .container { width: 100%; max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 20px; }
+        .header { text-align: center; padding: 20px 0; border-bottom: 1px solid #eeeeee; }
+        .header h2 { margin: 0; color: #333333; }
+        .content { padding: 30px 20px; text-align: left; font-size: 16px; line-height: 1.6; color: #333333; }
+        .content h1 { font-size: 22px; color: #d9534f; } /* Titre en rouge pour attirer l'attention */
+        .invoice-summary { background-color: #fff8f8; border: 1px solid #f5c6cb; padding: 20px; margin: 20px 0; border-radius: 5px; }
+        .invoice-summary h3 { margin-top: 0; color: #333333; }
+        .invoice-summary p { margin: 10px 0; }
+        .invoice-summary strong { color: #000000; }
+        .button-container { text-align: center; padding: 20px 0; }
+        .button { background-color: #0d6efd; color: #ffffff; padding: 15px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; }
+        .footer { text-align: center; padding: 20px; font-size: 12px; color: #777777; }
+    </style>
+</head>
+<body>
+    <table class="container" cellpadding="0" cellspacing="0" role="presentation">
+        <tr>
+            <td>
+                <div class="header">
+                    <h2>{{entreprise.nom}}</h2>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <div class="content">
+                    <h1>Rappel Amical : Facture Impayée</h1>
+                    <p>
+                        Bonjour {{client.nom}},
+                    </p>
+                    <p>
+                        Sauf erreur de notre part, il semble que la facture détaillée ci-dessous, arrivée à échéance le <strong>{{formatDate facture.dateEcheance 'DD/MM/YYYY'}}</strong>, n'ait pas encore été réglée.
+                    </p>
+
+                    <div class="invoice-summary">
+                        <h3>Détails de la facture en attente</h3>
+                        <p><strong>Numéro de facture :</strong> {{facture.numero}}</p>
+                        <p><strong>Date d'émission :</strong> {{formatDate facture.dateEmission 'DD/MM/YYYY'}}</p>
+                        <p><strong>Montant dû :</strong> <strong style="font-size: 18px; color: #d9534f;">{{formatCurrency facture.soldeDu 'XOF'}}</strong></p>
+                    </div>
+
+                    <p>
+                        Si le paiement a déjà été effectué, veuillez ne pas tenir compte de cet email. La facture originale est de nouveau jointe à ce message pour votre référence.
+                    </p>
+                    
+                    {{#if paymentUrl}}
+                    <p>
+                        Pour régulariser votre situation au plus vite, vous pouvez effectuer le paiement directement en ligne.
+                    </p>
+                    <div class="button-container">
+                        <a href="{{paymentUrl}}" class="button">Payer maintenant</a>
+                    </div>
+                    {{/if}}
+
+                    <p>
+                        Si vous rencontrez des difficultés ou si vous avez des questions, n'hésitez pas à nous répondre directement ou à nous contacter.
+                    </p>
+                    <p>
+                        Nous vous remercions de votre attention rapide à ce sujet.
+                    </p>
+                    <p>
+                        Cordialement,<br>
+                        Le service comptabilité de {{entreprise.nom}}
+                    </p>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <div class="footer">
+                    <p>
+                        Contact : {{entreprise.email}} | {{entreprise.telephone}}
+                    </p>
+                    <p>
+                        © {{currentYear}} {{entreprise.nom}}. Tous droits réservés.
+                    </p>
+                </div>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

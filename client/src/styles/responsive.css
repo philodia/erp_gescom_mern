@@ -1,0 +1,126 @@
+/* ==========================================================================
+   Styles Responsive Globaux
+   ========================================================================== */
+
+/*
+  Breakpoints Bootstrap de référence (pour la cohérence) :
+  - sm: 576px
+  - md: 768px
+  - lg: 992px
+  - xl: 1200px
+  - xxl: 1400px
+*/
+
+/* --- Styles pour les tablettes et plus petits (en dessous de 992px) --- */
+@media (max-width: 991.98px) {
+  
+  /* Ajuster le contenu principal pour qu'il ne soit pas caché par la sidebar mobile */
+  .main-content {
+    width: 100%;
+    margin-left: 0;
+    transition: margin-left 0.3s;
+  }
+  
+  /* Quand la sidebar est ouverte sur mobile, on pousse le contenu principal */
+  /* C'est un effet optionnel mais agréable. */
+  /* body.sidebar-open .main-content {
+    margin-left: 250px;
+  } */
+
+  /* Augmenter la taille de la police de base pour une meilleure lisibilité sur tablette */
+  body {
+    font-size: 1rem;
+  }
+  
+  /* Réduire le padding des cartes pour gagner de la place */
+  .card-body {
+    padding: 1rem;
+  }
+  
+  .page-title {
+    font-size: 1.5rem;
+  }
+}
+
+
+/* --- Styles pour les téléphones mobiles (en dessous de 768px) --- */
+@media (max-width: 767.98px) {
+  
+  /* Forcer les colonnes des formulaires à s'empiler */
+  .form-row, .row {
+    flex-direction: column;
+  }
+  
+  .form-row .col, .row .col,
+  .form-row [class*="col-"], .row [class*="col-"] {
+    width: 100%;
+    flex: 0 0 100%;
+    max-width: 100%;
+    margin-bottom: 1rem;
+  }
+
+  /* Centrer les actions des formulaires */
+  .form-actions {
+    text-align: center;
+  }
+  
+  .form-actions .btn {
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+  
+  .form-actions .btn:last-child {
+    margin-bottom: 0;
+  }
+  
+  /* Cacher certains détails dans les tableaux pour une vue mobile simplifiée */
+  .hide-on-mobile {
+    display: none !important;
+  }
+
+  /* Ajuster le header */
+  .app-header {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  
+}
+
+
+/* --- Styles pour les très petits téléphones (en dessous de 576px) --- */
+@media (max-width: 575.98px) {
+
+  body {
+    font-size: 0.95rem; /* Réduire encore un peu la police */
+  }
+  
+  .page-title {
+    font-size: 1.25rem;
+  }
+  
+  .card-header h4, .card-header h5 {
+    font-size: 1.1rem;
+  }
+  
+  /* S'assurer que les tableaux ne débordent pas horizontalement */
+  .table-responsive {
+    border: none; /* Retirer la bordure qui peut être moche sur mobile */
+  }
+}
+
+
+/* --- Styles pour les très grands écrans (au-dessus de 1400px) --- */
+@media (min-width: 1400px) {
+  
+  /* Augmenter la largeur maximale du contenu pour mieux utiliser l'espace */
+  .container, .container-lg, .container-md, .container-sm, .container-xl, .container-xxl {
+    max-width: 1320px;
+  }
+  
+  /* On pourrait aussi augmenter la taille de la police de base */
+  /*
+  body {
+    font-size: 1.1rem;
+  }
+  */
+}

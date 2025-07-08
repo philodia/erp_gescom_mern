@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rapport de Stock - {{formatDate dateGeneration 'DD/MM/YYYY'}}</title>
+    <style>
+        /* Les styles sont similaires aux autres rapports pour la cohérence */
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            font-size: 10pt;
+            color: #333;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+
+        .report-header {
+            text-align: center;
+            border-bottom: 2px solid #333;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+
+        .report-header h1 { margin: 0; font-size: 22pt; }
+        .report-header h2 { margin: 5px 0 0 0; font-size: 14pt; font-weight: 500; color: #555; }
+
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .kpi-card {
+            border: 1px solid #ddd;
+            padding: 15px;
+            text-align: center;
+            border-radius: 5px;
+        }
+
+        .kpi-card .label { font-size: 10pt; color: #666; margin-bottom: 5px; text-transform: uppercase; }
+        .kpi-card .value { font-size: 18pt; font-weight: 700; }
+
+        .section-title {
+            font-size: 16pt;
+            font-weight: 700;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 5px;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+
+        .data-table th, .data-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        .data-table th { background-color: #f2f2f2; font-weight: bold; }
+        .data-table .text-right { text-align: right; }
+        .data-table .text-center { text-align: center; }
+        .low-stock { background-color: #fff2f2; color: #d9534f; } /* Pour les stocks faibles */
+
+        .footer {
+            margin-top: 40px;
+            text-align: center;
+            font-size: 9pt;
+            color: #777;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="report-header">
+            <h1>Rapport de Stock</h1>
+            <h2>État des stocks au {{formatDate dateGeneration 'DD/MM/YYYY HH:mm'}}</h2>
+            <p>Dépôt : {{depot.nom}}</p>
+        </header>
+
+        <section>
+            <h3 class="section-title">Synthèse du Stock</h3>
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="label">Valeur Totale du Stock (Prix d'achat)</div>
+                    <div class="value">{{formatCurrency kpis.valeurTotaleStock 'XOF'}}</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="label">Nombre de Références</div>
+                    <div class="value">{{kpis.nombreReferences}}</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="label">Articles en Rupture / Stock Faible</div>
+                    <div class="value">{{kpis.articlesStockFaible}}</div>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h3 class="section-title">État Détaillé du Stock</h3>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Référence</th>
+                        <th>Désignation du Produit</th>
+                        <th class="text-center">Quantité en Stock</th>
+                        <th class="text-right">Prix d'Achat Unitaire</th>
+                        <th class="text-right">Valeur du Stock</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#each produits}}
+                    <!-- Applique une classe si le stock est en dessous du seuil d'alerte -->
+                    <tr class="{{#if (isLessThanOrEqual this.quantiteEnStock this.seuilAlerte)}}low-stock{{/if}}">
+                        <td>{{this.reference}}</td>
+                        <td>{{this.nom}}</td>
+                        <td class="text-center">{{this.quantiteEnStock}}</td>
+                        <td class="text-right">{{formatCurrency this.prixAchat 'XOF'}}</td>
+                        <td class="text-right">{{formatCurrency (multiply this.quantiteEnStock this.prixAchat) 'XOF'}}</td>
+                    </tr>
+                    {{/each}}
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <th colspan="4" class="text-right">Valeur Totale du Stock :</th>
+                        <th class="text-right">{{formatCurrency kpis.valeurTotaleStock 'XOF'}}</th>
+                    </tr>
+                </tfoot>
+            </table>
+        </section>
+
+        <section>
+            <h3 class="section-title">Articles à Recommander (Stock faible)</h3>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Référence</th>
+                        <th>Désignation du Produit</th>
+                        <th class="text-center">Stock Actuel</th>
+                        <th class="text-center">Seuil d'Alerte</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#each articlesACommander}}
+                    <tr>
+                        <td>{{this.reference}}</td>
+                        <td>{{this.nom}}</td>
+                        <td class="text-center">{{this.quantiteEnStock}}</td>
+                        <td class="text-center">{{this.seuilAlerte}}</td>
+                    </tr>
+                    {{/each}}
+                </tbody>
+            </table>
+        </section>
+
+        <footer class="footer">
+            <p>Rapport généré par l'application de gestion commerciale - {{entreprise.nomEntreprise}}</p>
+        </footer>
+    </div>
+</body>
+</html>

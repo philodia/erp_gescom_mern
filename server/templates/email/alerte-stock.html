@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alerte de Stock Faible</title>
+    <style>
+        body { margin: 0; padding: 0; background-color: #f4f4f4; font-family: Arial, sans-serif; }
+        .container { width: 100%; max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 20px; }
+        .header { text-align: center; padding: 20px 0; background-color: #ffc107; color: #333; }
+        .header h1 { margin: 0; font-size: 24px; }
+        .content { padding: 30px 20px; text-align: left; font-size: 16px; line-height: 1.6; color: #333333; }
+        .product-list { margin: 20px 0; padding: 0; list-style-type: none; }
+        .product-list li { background-color: #f9f9f9; border: 1px solid #eeeeee; padding: 15px; margin-bottom: 10px; border-radius: 5px; }
+        .product-list .product-name { font-weight: bold; font-size: 18px; color: #000; }
+        .product-list .stock-details { font-size: 14px; }
+        .stock-details .current-stock { color: #dc3545; font-weight: bold; } /* Rouge pour le stock actuel */
+        .button-container { text-align: center; padding: 20px 0; }
+        .button { background-color: #0d6efd; color: #ffffff; padding: 15px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; }
+        .footer { text-align: center; padding: 20px; font-size: 12px; color: #777777; }
+    </style>
+</head>
+<body>
+    <table class="container" cellpadding="0" cellspacing="0" role="presentation">
+        <tr>
+            <td>
+                <div class="header">
+                    <h1>Alerte de Stock Faible</h1>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <div class="content">
+                    <h2>Bonjour,</h2>
+                    <p>
+                        Ceci est une notification automatique pour vous informer que le niveau de stock pour le(s) produit(s) suivant(s) a atteint ou est tombé en dessous du seuil d'alerte défini.
+                    </p>
+
+                    <ul class="product-list">
+                        {{#each produits}}
+                        <li>
+                            <div class="product-name">{{this.nom}}</div>
+                            <div class="product-ref">Référence : <strong>{{this.reference}}</strong></div>
+                            <div class="stock-details">
+                                Stock actuel : <span class="current-stock">{{this.quantiteEnStock}}</span><br>
+                                Seuil d'alerte : <span>{{this.seuilAlerte}}</span>
+                            </div>
+                        </li>
+                        {{/each}}
+                    </ul>
+
+                    <p>
+                        Il est recommandé de passer une nouvelle commande auprès du fournisseur pour réapprovisionner ces articles et éviter toute rupture de stock.
+                    </p>
+                    
+                    <div class="button-container">
+                        <a href="{{stockModuleUrl}}" class="button">Gérer les Stocks</a>
+                    </div>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <div class="footer">
+                    <p>
+                        Cet email est une notification automatique générée par {{appName}}.
+                    </p>
+                    <p>
+                        © {{currentYear}} {{appName}}. Tous droits réservés.
+                    </p>
+                </div>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

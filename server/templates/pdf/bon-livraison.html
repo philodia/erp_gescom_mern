@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bon de Livraison {{numero}}</title>
+    <style>
+        /* Styles identiques pour la cohérence visuelle */
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            font-size: 10pt;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background-color: #fff;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 2px solid #000;
+            padding-bottom: 20px;
+            margin-bottom: 40px;
+        }
+
+        .company-details {
+            text-align: left;
+        }
+
+        .company-details h1 {
+            margin: 0;
+            font-size: 18pt;
+            color: #000;
+        }
+
+        .document-title {
+            text-align: right;
+        }
+
+        .document-title h2 {
+            margin: 0;
+            font-size: 24pt;
+            color: #333;
+            text-transform: uppercase;
+        }
+
+        .addresses {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 40px;
+        }
+
+        .client-details {
+            width: 48%;
+        }
+        
+        .client-details strong {
+            font-size: 12pt;
+        }
+
+        .metadata {
+            width: 48%;
+            text-align: right;
+            border-left: 1px solid #eee;
+            padding-left: 20px;
+        }
+
+        .metadata p {
+            margin: 5px 0;
+        }
+        
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+
+        .items-table th, .items-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        .items-table th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        
+        .items-table .description {
+            width: 70%;
+        }
+
+        .reception-section {
+            margin-top: 60px;
+            padding: 20px;
+            border: 1px solid #ddd;
+        }
+
+        .reception-section h3 {
+            margin-top: 0;
+            font-size: 12pt;
+        }
+
+        .signature-area {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 40px;
+        }
+        .signature-box {
+            width: 45%;
+        }
+        .signature-line {
+            border-top: 1px solid #000;
+            margin-top: 50px;
+        }
+        .signature-label {
+            text-align: center;
+            font-size: 9pt;
+        }
+
+
+        .footer {
+            margin-top: 50px;
+            text-align: center;
+            font-size: 9pt;
+            color: #777;
+            border-top: 1px solid #eee;
+            padding-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="company-details">
+                <h1>{{entreprise.nomEntreprise}}</h1>
+                <p>
+                    {{entreprise.adresse.rue}}<br>
+                    {{entreprise.adresse.ville}} {{entreprise.adresse.codePostal}}<br>
+                    {{entreprise.adresse.pays}}
+                </p>
+                <p>
+                    Tél : {{entreprise.telephone}}<br>
+                    Email : {{entreprise.email}}
+                </p>
+            </div>
+            <div class="document-title">
+                <h2>Bon de Livraison</h2>
+            </div>
+        </header>
+
+        <section class="addresses">
+            <div class="client-details">
+                <strong>Adresse de Livraison :</strong>
+                <p>
+                    <strong>{{client.nom}}</strong><br>
+                    {{#if client.adresse.rue}}{{client.adresse.rue}}<br>{{/if}}
+                    {{#if client.adresse.ville}}{{client.adresse.ville}} {{client.adresse.codePostal}}<br>{{/if}}
+                    {{#if client.adresse.pays}}{{client.adresse.pays}}{{/if}}
+                </p>
+            </div>
+            <div class="metadata">
+                <p><strong>N° de livraison :</strong> {{numero}}</p>
+                <p><strong>Date de livraison :</strong> {{formatDate dateLivraison 'DD/MM/YYYY'}}</p>
+                <p><strong>Commande N° :</strong> {{commandeRef}}</p>
+            </div>
+        </section>
+
+        <table class="items-table">
+            <thead>
+                <tr>
+                    <th class="description">Description du Produit</th>
+                    <th>Quantité Livrée</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#each lignes}}
+                <tr>
+                    <td>
+                        {{this.produit.nom}}<br>
+                        <small>Référence : {{this.produit.reference}}</small>
+                    </td>
+                    <td>{{this.quantite}}</td>
+                </tr>
+                {{/each}}
+            </tbody>
+        </table>
+
+        <section class="reception-section">
+            <h3>Accusé de Réception</h3>
+            <p>
+                Je soussigné(e), ..................................................................., 
+                agissant pour le compte de la société {{client.nom}}, 
+                reconnais avoir reçu les marchandises listées ci-dessus, en bon état et conformes à la commande.
+            </p>
+            <div class="signature-area">
+                <div class="signature-box">
+                    <p>Fait à: ..........................</p>
+                    <p>Le: .../.../......</p>
+                </div>
+                <div class="signature-box">
+                    <div class="signature-line"></div>
+                    <p class="signature-label">Nom, Cachet et Signature du client</p>
+                </div>
+            </div>
+        </section>
+
+        <footer class="footer">
+            <p>{{entreprise.mentionsLegales}}</p>
+        </footer>
+    </div>
+</body>
+</html>

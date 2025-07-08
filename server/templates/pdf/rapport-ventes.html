@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rapport des Ventes - {{periode}}</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            font-size: 10pt;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+
+        .report-header {
+            text-align: center;
+            border-bottom: 2px solid #333;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+
+        .report-header h1 {
+            margin: 0;
+            font-size: 22pt;
+        }
+        
+        .report-header h2 {
+            margin: 5px 0 0 0;
+            font-size: 14pt;
+            font-weight: 500;
+            color: #555;
+        }
+
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .kpi-card {
+            border: 1px solid #ddd;
+            padding: 15px;
+            text-align: center;
+            border-radius: 5px;
+        }
+
+        .kpi-card .label {
+            font-size: 10pt;
+            color: #666;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        .kpi-card .value {
+            font-size: 18pt;
+            font-weight: 700;
+        }
+
+        .section-title {
+            font-size: 16pt;
+            font-weight: 700;
+            color: #000;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 5px;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+
+        .data-table th, .data-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        .data-table th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+
+        .data-table .text-right { text-align: right; }
+        .data-table .text-center { text-align: center; }
+        
+        .footer {
+            margin-top: 40px;
+            text-align: center;
+            font-size: 9pt;
+            color: #777;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="report-header">
+            <h1>Rapport des Ventes</h1>
+            <h2>Période du {{dateDebut}} au {{dateFin}}</h2>
+            <p>Généré le {{formatDate dateGeneration 'DD/MM/YYYY HH:mm'}}</p>
+        </header>
+
+        <section>
+            <h3 class="section-title">Indicateurs Clés de Performance (KPIs)</h3>
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="label">Chiffre d'Affaires (HT)</div>
+                    <div class="value">{{formatCurrency kpis.chiffreAffairesHT 'XOF'}}</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="label">Nombre de Factures</div>
+                    <div class="value">{{kpis.nombreFactures}}</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="label">Panier Moyen (HT)</div>
+                    <div class="value">{{formatCurrency kpis.panierMoyenHT 'XOF'}}</div>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h3 class="section-title">Top 5 des Produits les plus Vendus (par valeur)</h3>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Produit</th>
+                        <th class="text-center">Quantité Vendue</th>
+                        <th class="text-right">CA Total (HT)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#each topProduits}}
+                    <tr>
+                        <td>{{@index_1}}</td>
+                        <td>{{this.nom}}</td>
+                        <td class="text-center">{{this.quantiteTotale}}</td>
+                        <td class="text-right">{{formatCurrency this.caTotal 'XOF'}}</td>
+                    </tr>
+                    {{/each}}
+                </tbody>
+            </table>
+        </section>
+
+        <section>
+            <h3 class="section-title">Top 5 des Meilleurs Clients (par valeur)</h3>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Client</th>
+                        <th class="text-center">Nombre de Factures</th>
+                        <th class="text-right">CA Total (HT)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                     {{#each topClients}}
+                    <tr>
+                        <td>{{@index_1}}</td>
+                        <td>{{this.nom}}</td>
+                        <td class="text-center">{{this.nombreFactures}}</td>
+                        <td class="text-right">{{formatCurrency this.caTotal 'XOF'}}</td>
+                    </tr>
+                    {{/each}}
+                </tbody>
+            </table>
+        </section>
+        
+        <section>
+            <h3 class="section-title">Détail des Ventes par Facture</h3>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Facture N°</th>
+                        <th>Client</th>
+                        <th class="text-right">Montant HT</th>
+                        <th class="text-right">Montant TTC</th>
+                        <th>Statut</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#each detailVentes}}
+                    <tr>
+                        <td>{{formatDate this.dateEmission 'DD/MM/YYYY'}}</td>
+                        <td>{{this.numero}}</td>
+                        <td>{{this.client.nom}}</td>
+                        <td class="text-right">{{formatCurrency this.totalHT 'XOF'}}</td>
+                        <td class="text-right">{{formatCurrency this.totalTTC 'XOF'}}</td>
+                        <td>{{this.statut}}</td>
+                    </tr>
+                    {{/each}}
+                </tbody>
+                 <tfoot>
+                    <tr>
+                        <th colspan="3" class="text-right">Total Période :</th>
+                        <th class="text-right">{{formatCurrency kpis.chiffreAffairesHT 'XOF'}}</th>
+                        <th class="text-right">{{formatCurrency kpis.chiffreAffairesTTC 'XOF'}}</th>
+                        <th></th>
+                    </tr>
+                </tfoot>
+            </table>
+        </section>
+
+        <footer class="footer">
+            <p>Rapport généré par l'application de gestion commerciale - {{entreprise.nomEntreprise}}</p>
+        </footer>
+    </div>
+</body>
+</html>

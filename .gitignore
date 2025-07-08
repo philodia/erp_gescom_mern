@@ -1,0 +1,79 @@
+# ######################## #
+# Fichier .gitignore pour  #
+# ERP Commercial Sénégal   #
+# ######################## #
+
+# --- Dépendances ---
+# Ne jamais versionner les dossiers node_modules
+# Ils sont générés localement avec 'npm install'
+node_modules/
+client/node_modules/
+server/node_modules/
+
+# --- Fichiers de Build et de Distribution ---
+# Fichiers générés par le processus de build
+build/
+client/build/
+server/dist/
+dist/
+
+# --- Fichiers de Logs ---
+# Fichiers de logs générés par l'application ou npm
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# --- Fichiers d'Environnement ---
+# Ne JAMAIS versionner les fichiers .env contenant des secrets (clés API, mots de passe BDD, etc.)
+# Le fichier .env.example, qui sert de modèle, DOIT être versionné.
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.production
+
+# --- Fichiers Générés par le Système d'Exploitation ---
+.DS_Store
+Thumbs.db
+._*
+
+# --- Fichiers des Éditeurs de Code et IDE ---
+# VS Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/launch.json
+
+# JetBrains (WebStorm, IntelliJ, etc.)
+.idea/
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Autres
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# --- Rapports de Test et de Couverture ---
+coverage/
+.nyc_output/
+lcov.info
+
+# --- Contenu Généré par l'Utilisateur ---
+# Dossiers pour les fichiers uploadés par les utilisateurs (images, documents...)
+# et les fichiers exportés (PDF, Excel...)
+server/uploads/
+server/exports/
+uploads/
+exports/
+
+# --- Fichiers Temporaires ---
+.tmp/
+temp/

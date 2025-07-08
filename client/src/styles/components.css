@@ -1,0 +1,116 @@
+/* ==========================================================================
+   Styles pour les composants UI personnalisés
+   ========================================================================== */
+
+/* --- DataTable Component --- */
+.data-table-header th {
+  cursor: pointer;
+  user-select: none; /* Empêche la sélection du texte du header en cliquant */
+}
+
+.data-table-header th:hover {
+  background-color: rgba(0,0,0,0.05);
+}
+
+/* --- Card Component --- */
+/* On peut ajouter des variations de cartes si besoin */
+.card-header-icon {
+    font-size: 1.2rem;
+}
+
+/* --- Dropdown Component --- */
+.dropdown-toggle-no-caret::after {
+  display: none !important; /* Cache la flèche par défaut de Bootstrap */
+}
+
+.dropdown-toggle-no-caret {
+  cursor: pointer;
+}
+
+/* --- Tabs Component --- */
+.custom-tabs .nav-link {
+  color: var(--text-secondary);
+  border-bottom: 2px solid transparent;
+  padding-bottom: 0.75rem;
+}
+
+.custom-tabs .nav-link:hover {
+  border-color: var(--border-color);
+}
+
+.custom-tabs .nav-link.active {
+  color: var(--primary-color);
+  background-color: transparent !important; /* Surcharge pour un look plus moderne */
+  border-color: var(--primary-color) !important;
+  font-weight: 500;
+}
+
+/* Retire la bordure moche autour du contenu des onglets */
+.custom-tabs .tab-content > .active {
+  background-color: transparent !important;
+  border: none;
+}
+
+/* Ajoute un padding au contenu de l'onglet, s'il n'est pas dans un div séparé */
+.custom-tabs .tab-pane {
+  padding-top: 1rem;
+}
+
+/* --- Layout Components (Header, Sidebar) --- */
+/*
+  Note: Nous avons déjà mis la plupart de ces styles dans globals.css
+  car ils sont fondamentaux pour le layout. On peut les déplacer ici
+  si on préfère une séparation plus stricte.
+  Je les remets ici pour référence, commentés.
+*/
+
+/*
+.app-header {
+  background-color: var(--bg-secondary-color);
+  border-bottom: 1px solid var(--border-color);
+  min-height: 60px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.app-sidebar {
+  width: 250px;
+  min-height: 100vh;
+  background-color: var(--bg-secondary-color);
+  border-right: 1px solid var(--border-color);
+  transition: all 0.3s;
+}
+.app-sidebar ul li a {
+  padding: 10px 20px;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  color: var(--text-secondary);
+  transition: all 0.2s;
+}
+.app-sidebar ul li a.active {
+  background-color: var(--primary-color);
+  color: var(--text-on-primary-bg, #fff);
+  font-weight: 500;
+}
+*/
+
+/* --- Placeholder pour le contenu en chargement --- */
+.loading-placeholder {
+  animation: pulse-bg 1s infinite;
+}
+
+@keyframes pulse-bg {
+  0% { background-color: #eee; }
+  50% { background-color: #e0e0e0; }
+  100% { background-color: #eee; }
+}
+
+[data-theme="dark"] .loading-placeholder {
+  animation: pulse-bg-dark 1s infinite;
+}
+
+@keyframes pulse-bg-dark {
+  0% { background-color: #374151; }
+  50% { background-color: #4b5563; }
+  100% { background-color: #374151; }
+}

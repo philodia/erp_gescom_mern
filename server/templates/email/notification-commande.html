@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirmation de votre commande n°{{commande.numero}}</title>
+    <style>
+        body { margin: 0; padding: 0; background-color: #f4f4f4; font-family: Arial, sans-serif; }
+        .container { width: 100%; max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 20px; }
+        .header { text-align: center; padding: 20px 0; border-bottom: 1px solid #eeeeee; }
+        .header h2 { margin: 0; color: #333333; }
+        .content { padding: 30px 20px; text-align: left; font-size: 16px; line-height: 1.6; color: #333333; }
+        .content h1 { font-size: 22px; color: #333333; }
+        
+        .order-summary { margin: 20px 0; }
+        .order-summary-table { width: 100%; border-collapse: collapse; }
+        .order-summary-table th, .order-summary-table td { padding: 10px; text-align: left; border-bottom: 1px solid #eeeeee; }
+        .order-summary-table th { background-color: #f9f9f9; font-size: 14px; text-transform: uppercase; }
+        .order-summary-table .total-row td { border-top: 2px solid #333; font-weight: bold; font-size: 18px; }
+        .text-right { text-align: right !important; }
+
+        .shipping-address { background-color: #f9f9f9; border: 1px solid #eeeeee; padding: 20px; margin-top: 20px; border-radius: 5px; }
+        .shipping-address h3 { margin-top: 0; }
+
+        .button-container { text-align: center; padding: 20px 0; }
+        .button { background-color: #0d6efd; color: #ffffff; padding: 15px 25px; text-decoration: none; border-radius: 5px; font-weight: bold; }
+        .footer { text-align: center; padding: 20px; font-size: 12px; color: #777777; }
+    </style>
+</head>
+<body>
+    <table class="container" cellpadding="0" cellspacing="0" role="presentation">
+        <tr>
+            <td>
+                <div class="header">
+                    <h2>Merci pour votre commande !</h2>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <div class="content">
+                    <h1>Bonjour {{client.nom}},</h1>
+                    <p>
+                        Nous avons bien reçu votre commande n°<strong>{{commande.numero}}</strong> et nous vous en remercions. Nous commençons à la préparer pour l'expédition.
+                    </p>
+
+                    <div class="order-summary">
+                        <h3>Résumé de votre commande</h3>
+                        <table class="order-summary-table">
+                            <thead>
+                                <tr>
+                                    <th>Produit</th>
+                                    <th class="text-right">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {{#each commande.lignes}}
+                                <tr>
+                                    <td>{{this.produit.nom}} (x{{this.quantite}})</td>
+                                    <td class="text-right">{{formatCurrency (multiply this.quantite this.prixUnitaire) 'XOF'}}</td>
+                                </tr>
+                                {{/each}}
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td>Sous-total (HT)</td>
+                                    <td class="text-right">{{formatCurrency commande.totalHT 'XOF'}}</td>
+                                </tr>
+                                <tr>
+                                    <td>TVA</td>
+                                    <td class="text-right">{{formatCurrency commande.montantTVA 'XOF'}}</td>
+                                </tr>
+                                <tr class="total-row">
+                                    <td>Total</td>
+                                    <td class="text-right">{{formatCurrency commande.totalTTC 'XOF'}}</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+
+                    <div class="shipping-address">
+                        <h3>Adresse de livraison</h3>
+                        <p>
+                            {{client.nom}}<br>
+                            {{#if commande.adresseLivraison.rue}}{{commande.adresseLivraison.rue}}<br>{{/if}}
+                            {{#if commande.adresseLivraison.ville}}{{commande.adresseLivraison.ville}} {{commande.adresseLivraison.codePostal}}<br>{{/if}}
+                            {{#if commande.adresseLivraison.pays}}{{commande.adresseLivraison.pays}}{{/if}}
+                        </p>
+                    </div>
+
+                    <p style="margin-top: 20px;">
+                        Vous recevrez un autre email dès que votre commande sera expédiée.
+                    </p>
+                    <div class="button-container">
+                        <a href="{{commandeViewUrl}}" class="button">Voir le statut de ma commande</a>
+                    </div>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <div class="footer">
+                    <p>
+                        Des questions ? Contactez notre service client à {{entreprise.email}}.
+                    </p>
+                    <p>
+                        © {{currentYear}} {{entreprise.nom}}. Tous droits réservés.
+                    </p>
+                </div>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

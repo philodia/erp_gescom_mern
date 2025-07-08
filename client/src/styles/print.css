@@ -1,0 +1,97 @@
+/* ==========================================================================
+   Styles d'impression pour l'application
+   ========================================================================== */
+
+@media print {
+
+  /* --- CACHER LES ÉLÉMENTS D'INTERFACE NON NÉCESSAIRES --- */
+  
+  /* Cacher le header, la sidebar, et les pieds de page de layout */
+  .app-header,
+  .app-sidebar,
+  .app-footer,
+  .breadcrumb-container {
+    display: none !important;
+  }
+
+  /* Cacher les boutons d'action, les champs de recherche, etc. */
+  .btn,
+  button,
+  .form-control,
+  .form-select,
+  .input-group,
+  .no-print { /* Une classe utilitaire que l'on peut ajouter à tout élément à cacher */
+    display: none !important;
+  }
+
+  /* --- AJUSTER LE LAYOUT PRINCIPAL POUR L'IMPRESSION --- */
+
+  /* Forcer le contenu principal à prendre toute la largeur */
+  .main-content {
+    margin-left: 0 !important;
+    width: 100% !important;
+    padding: 0 !important;
+  }
+
+  /* Retirer les ombres et les bordures inutiles des cartes */
+  .card {
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  /* Assurer que le fond est blanc et le texte est noir pour l'économie d'encre */
+  body, .card, .card-body, .table {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  /* --- OPTIMISER LA TYPOGRAPHIE ET LES ÉLÉMENTS --- */
+  
+  /* Utiliser une police avec serifs, souvent plus lisible sur papier */
+  body {
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 12pt; /* Taille de police standard pour les documents */
+  }
+
+  /* S'assurer que les liens sont visibles mais pas forcément bleus */
+  a {
+    color: #000000 !important;
+    text-decoration: none;
+  }
+
+  /* Afficher l'URL complète après les liens (utile pour les documents imprimés) */
+  a[href^="http"]:after {
+    content: " (" attr(href) ")";
+    font-size: 90%;
+  }
+
+  /* Ne pas afficher l'URL pour les liens internes de l'application */
+  a[href^="/"]:after, a[href^="#"]:after {
+    content: "";
+  }
+  
+  /* --- OPTIMISER LES TABLEAUX --- */
+
+  .table, .table th, .table td {
+    border-color: #666 !important;
+    border-width: 1px !important;
+  }
+
+  .table thead {
+    display: table-header-group; /* Répète l'en-tête du tableau sur chaque page */
+  }
+
+  /* Éviter les sauts de page à l'intérieur d'une ligne de tableau ou d'un bloc d'image */
+  tr, img, .card {
+    page-break-inside: avoid;
+  }
+
+  /* Forcer un saut de page avant ou après un élément (si nécessaire) */
+  .page-break-before {
+    page-break-before: always;
+  }
+  
+  .page-break-after {
+    page-break-after: always;
+  }
+}

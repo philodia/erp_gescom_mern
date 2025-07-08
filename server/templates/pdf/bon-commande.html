@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bon de Commande {{numero}}</title>
+    <style>
+        /* Les styles sont identiques à ceux des autres documents pour la cohérence */
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            font-size: 10pt;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background-color: #fff;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 2px solid #000;
+            padding-bottom: 20px;
+            margin-bottom: 40px;
+        }
+
+        .company-details {
+            text-align: left;
+        }
+
+        .company-details h1 {
+            margin: 0;
+            font-size: 18pt;
+            color: #000;
+        }
+
+        .document-title {
+            text-align: right;
+        }
+
+        .document-title h2 {
+            margin: 0;
+            font-size: 24pt;
+            color: #333;
+            text-transform: uppercase;
+        }
+
+        .addresses {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 40px;
+        }
+
+        .supplier-details, .shipping-details {
+            width: 48%;
+        }
+        
+        .supplier-details strong, .shipping-details strong {
+            font-size: 12pt;
+        }
+
+        .metadata {
+            margin-top: 20px;
+            text-align: right;
+        }
+
+        .metadata p {
+            margin: 5px 0;
+        }
+        
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+
+        .items-table th, .items-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        .items-table th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+
+        .items-table .text-right {
+            text-align: right;
+        }
+        
+        .items-table .description {
+            width: 50%;
+        }
+
+        .totals {
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .totals-table {
+            width: 50%;
+            border-collapse: collapse;
+        }
+        
+        .totals-table td {
+            padding: 8px;
+            border: 1px solid #ddd;
+        }
+
+        .totals-table .label {
+            font-weight: bold;
+        }
+        
+        .totals-table .total-amount {
+            font-weight: bold;
+            font-size: 14pt;
+            background-color: #f2f2f2;
+        }
+
+        .footer {
+            margin-top: 50px;
+            text-align: center;
+            font-size: 9pt;
+            color: #777;
+            border-top: 1px solid #eee;
+            padding-top: 15px;
+        }
+
+        .signature {
+            margin-top: 60px;
+            text-align: right;
+        }
+        .signature-line {
+            border-top: 1px solid #000;
+            width: 200px;
+            margin: 40px 0 5px auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="company-details">
+                <h1>{{entreprise.nomEntreprise}}</h1>
+                <p>
+                    {{entreprise.adresse.rue}}<br>
+                    {{entreprise.adresse.ville}} {{entreprise.adresse.codePostal}}<br>
+                    {{entreprise.adresse.pays}}
+                </p>
+                <p>
+                    Tél : {{entreprise.telephone}}<br>
+                    Email : {{entreprise.email}}
+                </p>
+            </div>
+            <div class="document-title">
+                <h2>Bon de Commande</h2>
+                <div class="metadata">
+                    <p><strong>Numéro de commande :</strong> {{numero}}</p>
+                    <p><strong>Date d'émission :</strong> {{formatDate dateEmission 'DD/MM/YYYY'}}</p>
+                </div>
+            </div>
+        </header>
+
+        <section class="addresses">
+            <div class="supplier-details">
+                <strong>Fournisseur :</strong>
+                <p>
+                    <strong>{{fournisseur.nom}}</strong><br>
+                    {{#if fournisseur.adresse.rue}}{{fournisseur.adresse.rue}}<br>{{/if}}
+                    {{#if fournisseur.adresse.ville}}{{fournisseur.adresse.ville}} {{fournisseur.adresse.codePostal}}<br>{{/if}}
+                    {{#if fournisseur.adresse.pays}}{{fournisseur.adresse.pays}}{{/if}}
+                </p>
+            </div>
+            <div class="shipping-details">
+                <strong>Livrer à :</strong>
+                <p>
+                    <strong>{{entreprise.nomEntreprise}}</strong><br>
+                    <!-- Mettre ici l'adresse de livraison spécifique si différente de l'adresse de l'entreprise -->
+                    {{entreprise.adresse.rue}}<br>
+                    {{entreprise.adresse.ville}} {{entreprise.adresse.codePostal}}<br>
+                    {{entreprise.adresse.pays}}
+                </p>
+            </div>
+        </section>
+
+        <table class="items-table">
+            <thead>
+                <tr>
+                    <th class="description">Produit / Service</th>
+                    <th>Quantité</th>
+                    <th class="text-right">Prix Unitaire (HT)</th>
+                    <th class="text-right">Montant (HT)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#each lignes}}
+                <tr>
+                    <td>{{this.produit.nom}}</td>
+                    <td class="text-right">{{this.quantite}}</td>
+                    <td class="text-right">{{formatCurrency this.prixUnitaire 'XOF'}}</td>
+                    <td class="text-right">{{formatCurrency (multiply this.quantite this.prixUnitaire) 'XOF'}}</td>
+                </tr>
+                {{/each}}
+            </tbody>
+        </table>
+
+        <section class="totals">
+             <table class="totals-table">
+                <tbody>
+                    <tr>
+                        <td class="label">Total HT</td>
+                        <td class="text-right">{{formatCurrency totalHT 'XOF'}}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">TVA ({{tauxTVA}}%)</td>
+                        <td class="text-right">{{formatCurrency montantTVA 'XOF'}}</td>
+                    </tr>
+                    <tr>
+                        <td class="label total-amount">Total TTC</td>
+                        <td class="text-right total-amount">{{formatCurrency totalTTC 'XOF'}}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section class="signature">
+            <div class="signature-line"></div>
+            <p>Le Gestionnaire</p>
+        </section>
+
+        <footer class="footer">
+            <p>{{entreprise.mentionsLegales}}</p>
+        </footer>
+    </div>
+</body>
+</html>
