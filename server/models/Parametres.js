@@ -1,12 +1,16 @@
 const mongoose = require('mongoose');
-const { CURRENCIES } = require('../utils/constants'); // Importer les devises depuis les constantes
-const storageConfig = require('../config/storage'); // Importer la config de stockage pour l'URL de base
+const path = require('path'); // Importer path pour une gestion plus propre des chemins
+const { CURRENCIES } = require('../utils/constants');
+const storageConfig = require('../config/storage');
 
 const parametresSchema = new mongoose.Schema({
   nomEntreprise: {
     type: String,
     required: [true, "Le nom de l'entreprise est obligatoire."],
     trim: true,
+    // On peut s'assurer qu'il n'y ait qu'un seul document en rendant ce champ unique.
+    // L'approche "upsert" du contrôleur le gère déjà, mais c'est une double sécurité.
+    unique: true, 
   },
   
   adresse: {
@@ -33,16 +37,15 @@ const parametresSchema = new mongoose.Schema({
     trim: true,
   },
 
-  // Ce champ stockera le CHEMIN RELATIF du logo (ex: 'logos/monlogo-12345.png')
+  // Stocke le chemin relatif du logo, ex: 'logos/monlogo-12345.png'
   logo: {
     type: String,
   },
 
+  // NINEA / RCCM
   numeroTVA: {
     type: String,
     trim: true,
-    unique: true, 
-    sparse: true, 
   },
 
   devisePrincipale: {
@@ -51,7 +54,7 @@ const parametresSchema = new mongoose.Schema({
         values: Object.values(CURRENCIES),
         message: "La devise '{VALUE}' n'est pas supportée."
     },
-    default: CURRENCIES.XOF, // Utiliser la constante
+    default: CURRENCIES.XOF,
     required: true,
   },
 
@@ -62,27 +65,38 @@ const parametresSchema = new mongoose.Schema({
 
 }, {
   timestamps: true,
-  // Ajout d'un "virtual" pour construire l'URL complète du logo
   toJSON: { virtuals: true },
   toObject: { virtuals: true },
 });
 
-// Création d'un champ virtuel 'logoUrl'
-// Ce champ n'est pas stocké en base de données, mais est calculé à la volée.
+
+/**
+ * Champ Virtuel: logoUrl
+ * Construit l'URL complète et absolue du logo de l'entreprise.
+ * Ce champ n'est pas stocké en base de données mais est calculé dynamiquement,
+ * ce qui le rend flexible aux changements de configuration de stockage (local vs S3).
+ */
 parametresSchema.virtual('logoUrl').get(function() {
-  if (this.logo) {
-    // Utilise la configuration de stockage pour construire l'URL
-    const baseUrl = storageConfig.disks[storageConfig.disk].url;
-    return `${baseUrl}/${this.logo}`;
+  // Récupérer la configuration du disque de stockage actuel
+  const diskConfig = storageConfig.disks[storageConfig.disk];
+  if (!diskConfig) {
+      // Cas de secours si la configuration est invalide
+      return null;
   }
-  // Retourne un chemin vers un logo par défaut si aucun n'est défini
-  return `${storageConfig.disks[storageConfig.disk].url}/logos/default_logo.png`;
+  
+  const baseUrl = diskConfig.url;
+
+  if (this.logo) {
+    // path.join est plus robuste que la concaténation simple avec '/'
+    // bien qu'ici, avec une URL, une concaténation simple fonctionne bien aussi.
+    // On s'assure de ne pas avoir de double slash si baseUrl en a un.
+    return `${baseUrl.replace(/\/$/, '')}/${this.logo}`;
+  }
+  
+  // Chemin par défaut
+  const defaultLogoPath = path.join(storageConfig.paths.logos, 'default_logo.png').replace(/\\/g, '/');
+  return `${baseUrl.replace(/\/$/, '')}/${defaultLogoPath}`;
 });
-
-
-// Index unique pour s'assurer qu'il n'y a qu'un seul document de paramètres.
-// Le nom est un bon candidat pour cette unicité.
-parametresSchema.index({ _id: 1 });
 
 
 const Parametres = mongoose.model('Parametres', parametresSchema);

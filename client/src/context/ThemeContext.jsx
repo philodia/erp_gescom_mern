@@ -1,12 +1,13 @@
-import React, { createContext, useEffect, useContext } from 'react';
-import useLocalStorage from '../hooks/useLocalStorage'; // Importer notre hook magique
-import { LOCAL_STORAGE_KEYS } from '../utils/constants'; // Importer nos clés de stockage
+import React, { createContext, useEffect, useContext, useCallback } from 'react';
+import useLocalStorage from '../hooks/useLocalStorage';
+import { LOCAL_STORAGE_KEYS } from '../utils/constants';
 
 /**
- * Détermine le thème initial de manière intelligente.
- * Cette fonction est maintenant appelée seulement si useLocalStorage ne trouve rien.
+ * Détermine le thème initial en se basant sur la préférence système de l'utilisateur.
+ * Cette fonction n'est appelée que si aucune valeur n'est trouvée dans le localStorage.
  */
 const getInitialTheme = () => {
+  // `window.matchMedia` est l'API standard pour détecter les préférences utilisateur.
   const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
   return prefersDark ? 'dark' : 'light';
 };
@@ -25,24 +26,22 @@ export const useTheme = () => {
 
 // 3. Création du Fournisseur (Provider) de Contexte
 export const ThemeProvider = ({ children }) => {
-  // --- Utilisation de useLocalStorage pour gérer l'état du thème ---
-  // Le hook gère lui-même la lecture initiale et la sauvegarde automatique.
-  // On lui passe la clé et la fonction pour déterminer la valeur initiale si rien n'est stocké.
+  // Le hook useLocalStorage gère l'état et la persistance.
   const [theme, setTheme] = useLocalStorage(LOCAL_STORAGE_KEYS.THEME, getInitialTheme);
 
-  // --- Fonction pour basculer le thème ---
-  const toggleTheme = () => {
+  // La fonction pour basculer le thème est maintenant mémorisée avec useCallback.
+  // Cela garantit qu'elle a une référence stable et ne sera pas recréée à chaque rendu,
+  // ce qui est une bonne pratique pour les fonctions passées dans un contexte.
+  const toggleTheme = useCallback(() => {
     setTheme(prevTheme => (prevTheme === 'light' ? 'dark' : 'light'));
-  };
+  }, [setTheme]); // La dépendance est `setTheme`, qui est garantie stable par React.
 
-  // --- Effet de bord pour mettre à jour le DOM ---
-  // Cet effet ne s'occupe plus que de la manipulation du DOM.
-  // La persistance est gérée par le hook useLocalStorage.
+  // Effet de bord pour appliquer le thème au DOM.
   useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
+    const root = document.documentElement;
+    root.setAttribute('data-theme', theme);
   }, [theme]);
 
-  // --- Rassembler les valeurs à fournir ---
   const value = {
     theme,
     toggleTheme,

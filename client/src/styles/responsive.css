@@ -13,44 +13,43 @@
 
 /* --- Styles pour les tablettes et plus petits (en dessous de 992px) --- */
 @media (max-width: 991.98px) {
-  
+
   /* Ajuster le contenu principal pour qu'il ne soit pas caché par la sidebar mobile */
   .main-content {
     width: 100%;
     margin-left: 0;
     transition: margin-left 0.3s;
   }
-  
-  /* Quand la sidebar est ouverte sur mobile, on pousse le contenu principal */
-  /* C'est un effet optionnel mais agréable. */
-  /* body.sidebar-open .main-content {
-    margin-left: 250px;
-  } */
 
   /* Augmenter la taille de la police de base pour une meilleure lisibilité sur tablette */
   body {
     font-size: 1rem;
+    line-height: 1.6; /* Améliore la lisibilité */
   }
-  
+
   /* Réduire le padding des cartes pour gagner de la place */
   .card-body {
     padding: 1rem;
   }
-  
+
   .page-title {
     font-size: 1.5rem;
   }
-}
 
+  /* Ajuster les marges et paddings pour les éléments de navigation */
+  .nav-item, .nav-link {
+    padding: 0.5rem 1rem;
+  }
+}
 
 /* --- Styles pour les téléphones mobiles (en dessous de 768px) --- */
 @media (max-width: 767.98px) {
-  
+
   /* Forcer les colonnes des formulaires à s'empiler */
   .form-row, .row {
     flex-direction: column;
   }
-  
+
   .form-row .col, .row .col,
   .form-row [class*="col-"], .row [class*="col-"] {
     width: 100%;
@@ -63,16 +62,16 @@
   .form-actions {
     text-align: center;
   }
-  
+
   .form-actions .btn {
     width: 100%;
     margin-bottom: 0.5rem;
   }
-  
+
   .form-actions .btn:last-child {
     margin-bottom: 0;
   }
-  
+
   /* Cacher certains détails dans les tableaux pour une vue mobile simplifiée */
   .hide-on-mobile {
     display: none !important;
@@ -83,9 +82,13 @@
     padding-left: 1rem;
     padding-right: 1rem;
   }
-  
-}
 
+  /* Ajuster les tailles des polices pour les titres et sous-titres */
+  h1, h2, h3, h4, h5, h6 {
+    font-size: 1.25em;
+    margin-bottom: 0.5em;
+  }
+}
 
 /* --- Styles pour les très petits téléphones (en dessous de 576px) --- */
 @media (max-width: 575.98px) {
@@ -93,34 +96,44 @@
   body {
     font-size: 0.95rem; /* Réduire encore un peu la police */
   }
-  
+
   .page-title {
     font-size: 1.25rem;
   }
-  
+
   .card-header h4, .card-header h5 {
     font-size: 1.1rem;
   }
-  
+
   /* S'assurer que les tableaux ne débordent pas horizontalement */
   .table-responsive {
     border: none; /* Retirer la bordure qui peut être moche sur mobile */
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch; /* Permet un défilement fluide sur iOS */
+  }
+
+  /* Ajuster les marges et paddings pour les petits écrans */
+  .container, .container-fluid {
+    padding-left: 10px;
+    padding-right: 10px;
   }
 }
 
-
 /* --- Styles pour les très grands écrans (au-dessus de 1400px) --- */
 @media (min-width: 1400px) {
-  
+
   /* Augmenter la largeur maximale du contenu pour mieux utiliser l'espace */
   .container, .container-lg, .container-md, .container-sm, .container-xl, .container-xxl {
     max-width: 1320px;
   }
-  
-  /* On pourrait aussi augmenter la taille de la police de base */
-  /*
+
+  /* Augmenter la taille de la police de base pour les grands écrans */
   body {
     font-size: 1.1rem;
   }
-  */
+
+  /* Ajuster les marges et paddings pour les grands écrans */
+  .main-content {
+    padding: 2rem;
+  }
 }

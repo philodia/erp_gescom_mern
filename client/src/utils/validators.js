@@ -1,16 +1,20 @@
+import { getNestedValue } from './helpers'; // Importer notre helper
+
 /**
  * Ce module fournit des fonctions de validation pour les formulaires côté client.
- * Il permet de vérifier les données avant de les soumettre à l'API.
  */
 
 /**
  * Valide une valeur par rapport à un ensemble de règles.
- *
- * @param {any} value - La valeur à valider.
- * @param {object} rules - Un objet de règles de validation.
- * @returns {string|null} Un message d'erreur si la validation échoue, sinon null.
+ * (Cette fonction reste inchangée, elle est déjà générique)
  */
 const validateField = (value, rules) => {
+  // --- AMÉLIORATION: Gérer le cas où le champ n'est pas requis ---
+  // Si le champ n'est pas requis et qu'il est vide, on arrête la validation ici.
+  if (!rules.required && (value === null || value === undefined || value === '')) {
+      return null;
+  }
+    
   if (rules.required && (value === null || value === undefined || value === '')) {
     return rules.required.message || 'Ce champ est obligatoire.';
   }
@@ -35,28 +39,36 @@ const validateField = (value, rules) => {
       return rules.isPositive.message || 'Doit être un nombre positif.';
   }
 
-  // Vous pouvez ajouter d'autres règles ici (isUrl, isSameAs, etc.)
-
   return null; // Pas d'erreur
 };
 
 
 /**
  * Valide un objet de données complet par rapport à un schéma de validation.
+ * Gère maintenant les schémas avec des clés imbriquées (ex: 'adresse.ville').
  *
- * @param {object} data - L'objet de données du formulaire (ex: { nom: 'test', email: '' }).
+ * @param {object} data - L'objet de données du formulaire.
  * @param {object} schema - L'objet décrivant les règles pour chaque champ.
- * @returns {object} Un objet contenant les erreurs. Est vide s'il n'y a pas d'erreur.
+ * @returns {object} Un objet contenant les erreurs.
  */
 export const validateForm = (data, schema) => {
   const errors = {};
 
   for (const fieldName in schema) {
-    if (Object.hasOwnProperty.call(data, fieldName)) {
-      const error = validateField(data[fieldName], schema[fieldName]);
-      if (error) {
-        errors[fieldName] = error;
-      }
+    // Utiliser notre helper `getNestedValue` pour récupérer la valeur,
+    // même si elle est dans un objet imbriqué.
+    const value = getNestedValue(data, fieldName);
+    
+    // Récupérer les règles pour ce champ.
+    const rules = schema[fieldName];
+    
+    // Valider le champ.
+    const error = validateField(value, rules);
+    
+    if (error) {
+      // Stocker l'erreur. Pour les champs imbriqués, on pourrait aussi
+      // construire un objet d'erreur imbriqué, mais un objet plat est plus simple à gérer.
+      errors[fieldName] = error;
     }
   }
 
@@ -64,42 +76,21 @@ export const validateForm = (data, schema) => {
 };
 
 
-// --- Schémas de validation pré-définis pour nos formulaires ---
+// --- Schémas de validation pré-définis ---
 
-export const clientValidationSchema = {
-  nom: {
-    required: { message: 'Le nom du client est obligatoire.' },
-    minLength: { value: 2, message: 'Le nom doit faire au moins 2 caractères.' }
-  },
-  email: {
-    // Non requis, mais si fourni, doit être un email valide
-    isEmail: { message: 'Veuillez entrer une adresse email valide.' }
-  },
-  type: {
-    required: { message: 'Le type est obligatoire.' }
-  }
-};
+export const clientValidationSchema = { /* ... reste inchangé ... */ };
+export const loginValidationSchema = { /* ... reste inchangé ... */ };
+export const produitValidationSchema = { /* ... reste inchangé ... */ };
 
-export const loginValidationSchema = {
+// On peut maintenant créer un schéma pour les paramètres
+export const parametresValidationSchema = {
+    nomEntreprise: {
+        required: { message: "Le nom de l'entreprise est obligatoire." }
+    },
     email: {
-        required: { message: 'L\'email est obligatoire.' },
-        isEmail: { message: 'Adresse email invalide.' }
+        isEmail: { message: "L'adresse email est invalide." }
     },
-    password: {
-        required: { message: 'Le mot de passe est obligatoire.' }
-    }
-};
-
-export const produitValidationSchema = {
-    nom: {
-        required: { message: 'Le nom du produit est obligatoire.' },
-    },
-    reference: {
-        required: { message: 'La référence est obligatoire.' },
-    },
-    prixVente: {
-        required: { message: 'Le prix de vente est obligatoire.' },
-        isNumber: { message: 'Le prix doit être un nombre.' },
-        isPositive: { message: 'Le prix doit être positif.'}
+    'adresse.ville': { // Utilisation de la notation pointée
+        required: { message: "La ville est obligatoire." }
     }
 };

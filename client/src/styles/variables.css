@@ -1,37 +1,35 @@
 /* ==========================================================================
    Design Tokens - Variables CSS par défaut (Thème Clair)
    ========================================================================== */
-
 :root {
   /* --- Couleurs Primaires --- */
-  --primary: #0d6efd;
+  --primary-color: #0d6efd;
   --primary-hover: #0b5ed7;
   --primary-light: #e7f1ff;
-
-  --secondary: #6c757d;
+  --secondary-color: #6c757d;
   --secondary-hover: #5c636a;
 
   /* --- Couleurs Sémantiques --- */
-  --success: #198754;
-  --danger: #dc3545;
-  --warning: #ffc107;
-  --info: #0dcaf0;
+  --success-color: #198754;
+  --danger-color: #dc3545;
+  --warning-color: #ffc107;
+  --info-color: #0dcaf0;
 
   /* --- Couleurs de Fond (Background) --- */
-  --bg-primary: #f8f9fa;
-  --bg-secondary: #ffffff;
-  --bg-tertiary: #e9ecef;
+  --bg-primary-color: #f8f9fa;
+  --bg-secondary-color: #ffffff;
+  --bg-tertiary-color: #e9ecef;
 
   /* --- Couleurs de Texte --- */
-  --text-primary: #212529;
-  --text-secondary: #6c757d;
-  --text-muted: #adb5bd;
+  --text-primary-color: #212529;
+  --text-secondary-color: #6c757d;
+  --text-muted-color: #adb5bd;
   --text-on-primary-bg: #ffffff;
-  --text-link: var(--primary);
+  --text-link-color: var(--primary-color);
 
   /* --- Couleurs des Bordures --- */
-  --border-primary: #dee2e6;
-  --border-secondary: #ced4da;
+  --border-primary-color: #dee2e6;
+  --border-secondary-color: #ced4da;
 
   /* --- Typographie --- */
   --font-family-sans-serif: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
@@ -42,19 +40,35 @@
   --line-height-base: 1.5;
 
   /* --- Espacements & Dimensions --- */
-  --spacing-base: 1rem;
-  --spacing-xs: calc(var(--spacing-base) * 0.25);
-  --spacing-sm: calc(var(--spacing-base) * 0.5);
-  --spacing-md: calc(var(--spacing-base) * 1);
-  --spacing-lg: calc(var(--spacing-base) * 1.5);
-  --spacing-xl: calc(var(--spacing-base) * 3);
-  
+  --spacing-unit: 1rem;
+  --spacing-xs: calc(var(--spacing-unit) * 0.25);
+  --spacing-sm: calc(var(--spacing-unit) * 0.5);
+  --spacing-md: calc(var(--spacing-unit) * 1);
+  --spacing-lg: calc(var(--spacing-unit) * 1.5);
+  --spacing-xl: calc(var(--spacing-unit) * 3);
+
+  /* --- Layout Dimensions --- */
   --sidebar-width: 250px;
   --header-height: 60px;
 
-  /* --- Autres --- */
+  /* --- Autres Propriétés --- */
   --border-radius: 0.375rem;
   --box-shadow-sm: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
   --box-shadow-md: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
   --transition-base: all 0.2s ease-in-out;
+
+  /* --- Couleurs pour les états de survol et de focus --- */
+  --hover-color: rgba(0, 0, 0, 0.05);
+  --focus-outline-color: rgba(13, 110, 253, 0.5);
+
+  /* --- Couleurs pour les boutons --- */
+  --button-primary-bg: var(--primary-color);
+  --button-primary-hover-bg: var(--primary-hover);
+  --button-secondary-bg: var(--secondary-color);
+  --button-secondary-hover-bg: var(--secondary-hover);
+
+  /* --- Couleurs pour les formulaires --- */
+  --form-control-border-color: var(--border-primary-color);
+  --form-control-focus-border-color: var(--primary-color);
+  --form-control-focus-box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
 }

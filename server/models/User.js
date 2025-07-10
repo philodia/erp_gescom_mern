@@ -22,7 +22,7 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: [true, "Le mot de passe est obligatoire."],
     minlength: [6, "Le mot de passe doit contenir au moins 6 caractères."],
-    select: false, 
+    select: false,
   },
   role: {
     type: String,
@@ -58,11 +58,10 @@ userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) {
     return next();
   }
-
   // Utiliser le coût de hachage depuis la configuration centralisée
   const salt = await bcrypt.genSalt(bcryptConfig.saltRounds);
   this.password = await bcrypt.hash(this.password, salt);
-  
+
   next();
 });
 
@@ -78,7 +77,6 @@ userSchema.methods.matchPassword = async function (enteredPassword) {
 };
 
 // (On pourrait ajouter ici une méthode pour générer le token de reset de mot de passe)
-
 
 const User = mongoose.model('User', userSchema);
 

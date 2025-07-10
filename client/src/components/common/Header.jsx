@@ -1,17 +1,16 @@
 import React, { useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-// --- Contextes et Hooks ---
-// Les chemins d'import sont maintenant corrects et cohérents.
-import { useAuth } from '../../context/AuthContext';
+// --- Hooks & Contextes ---
+import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../context/ThemeContext';
-import { useNotification } from '../../context/NotificationContext';
-import { usePermissions } from '../../context/PermissionContext'; // CORRECTION: 'Can' est retiré
+import { useNotificationCenter } from '../../context/NotificationContext';
 
-// --- Constantes ---
+// --- Constantes & Utilitaires ---
 import { PERMISSIONS } from '../../utils/constants';
+import { capitalizeFirstLetter } from '../../utils/formatters';
 
-// --- UI ---
+// --- UI Components ---
 import { Navbar, Form, InputGroup } from 'react-bootstrap';
 import { 
   FaBars, FaBell, FaSun, FaMoon, FaUserCircle, FaCog, 
@@ -21,85 +20,77 @@ import Dropdown from '../ui/Dropdown';
 import Tooltip from '../ui/Tooltip';
 import Button from '../ui/Button';
 
+/**
+ * Composant Header principal de l'application.
+ * Gère la navigation, les actions utilisateur, les notifications et le changement de thème.
+ * @param {object} { toggleSidebar } - Fonction pour contrôler la sidebar sur mobile.
+ */
 const Header = ({ toggleSidebar }) => {
-  const { user, logout } = useAuth();
+  // --- Utilisation des Hooks ---
+  const { user, logout, can } = useAuth(); 
   const { theme, toggleTheme } = useTheme();
-  const { notifications, unreadCount, markAllAsRead, clearNotifications } = useNotification();
-  const { can } = usePermissions();
+  const { notifications, unreadCount, markAllAsRead, clearNotifications } = useNotificationCenter();
   const navigate = useNavigate();
   
   const isDarkTheme = theme === 'dark';
 
+  // --- Fonctions de Rappel (Callbacks) ---
+  // On mémorise les fonctions avec useCallback pour stabiliser leurs références,
+  // ce qui est une bonne pratique pour les passer en dépendances à useMemo.
   const handleLogout = useCallback(() => {
     logout();
-    navigate('/login');
+    navigate('/login', { replace: true });
   }, [logout, navigate]);
 
-  const navigateToProfile = useCallback(() => navigate('/profil'), [navigate]);
-  const navigateToSettings = useCallback(() => navigate('/parametres/entreprise'), [navigate]);
+  const navigateTo = useCallback((path) => {
+    navigate(path);
+  }, [navigate]);
 
+
+  // --- Mémorisation des Items de Menu ---
   const userDropdownItems = useMemo(() => {
     const items = [
-      {
-        label: 'Mon Profil',
-        onClick: navigateToProfile,
-        icon: FaUserCircle,
-      }
+      { label: 'Mon Profil', onClick: () => navigateTo('/profil'), icon: FaUserCircle }
     ];
-
     if (can(PERMISSIONS.CAN_MANAGE_SETTINGS)) {
-      items.push({
-        label: 'Paramètres',
-        onClick: navigateToSettings,
-        icon: FaCog,
-      });
+      items.push({ label: 'Paramètres', onClick: () => navigateTo('/parametres/entreprise'), icon: FaCog });
     }
-
-    items.push(
-      { isSeparator: true },
-      {
-        label: 'Déconnexion',
-        onClick: handleLogout,
-        icon: FaSignOutAlt,
-      }
-    );
-
+    items.push({ isSeparator: true }, { 
+      label: 'Déconnexion', 
+      onClick: handleLogout,
+      icon: FaSignOutAlt 
+    });
     return items;
-  }, [can, navigateToProfile, navigateToSettings, handleLogout]);
+  }, [can, navigateTo, handleLogout]);
 
   const notificationDropdownItems = useMemo(() => {
-    const items = [
+    const baseItems = [
         { isHeader: true, label: `Notifications (${unreadCount})` },
         { isSeparator: true },
     ];
     
-    if (notifications.length === 0) {
-        items.push({ label: "Aucune nouvelle notification", disabled: true });
-    } else {
-        notifications.slice(0, 5).forEach(n => items.push({
+    const notificationList = notifications.length === 0 
+        ? [{ label: "Aucune nouvelle notification", disabled: true }]
+        : notifications.slice(0, 5).map(n => ({
             label: n.message,
             icon: FaBook,
-            // onClick: () => navigate(n.link)
+            onClick: () => n.link && navigateTo(n.link)
         }));
-    }
 
-    items.push(
+    const actionItems = [
         { isSeparator: true },
         { label: 'Marquer tout comme lu', icon: FaCheck, onClick: markAllAsRead, disabled: unreadCount === 0 },
         { label: 'Effacer tout', icon: FaTrash, onClick: clearNotifications, disabled: notifications.length === 0 }
-    );
+    ];
     
-  // CORRECTION: 'navigate' est retiré des dépendances car non utilisé dans le hook.
-  }, [notifications, unreadCount, markAllAsRead, clearNotifications]);
+    return [...baseItems, ...notificationList, ...actionItems];
+  }, [notifications, unreadCount, markAllAsRead, clearNotifications, navigateTo]);
 
 
+  // --- Rendu JSX ---
   return (
     <Navbar expand="lg" className="app-header px-3" sticky="top">
-      <Button 
-        variant="outline-secondary" 
-        onClick={toggleSidebar} 
-        className="d-lg-none me-2"
-      >
+      <Button variant="outline-secondary" onClick={toggleSidebar} className="d-lg-none me-2">
         <FaBars />
       </Button>
 
@@ -120,16 +111,16 @@ const Header = ({ toggleSidebar }) => {
             align="end"
             items={notificationDropdownItems}
             trigger={
-                <Tooltip text="Notifications">
-                    <Button variant="link" className="text-secondary position-relative">
-                        <FaBell />
-                        {unreadCount > 0 && (
-                            <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                                {unreadCount > 9 ? '9+' : unreadCount}
-                            </span>
-                        )}
-                    </Button>
-                </Tooltip>
+              <Tooltip text="Notifications">
+                  <Button variant="link" className="text-secondary position-relative">
+                      <FaBell />
+                      {unreadCount > 0 && (
+                          <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                              {unreadCount > 9 ? '9+' : unreadCount}
+                          </span>
+                      )}
+                  </Button>
+              </Tooltip>
             }
         />
         
@@ -139,10 +130,13 @@ const Header = ({ toggleSidebar }) => {
             items={userDropdownItems}
             trigger={
               <div className="d-flex align-items-center cursor-pointer">
-                <FaUserCircle size="1.5rem" className="me-2 text-secondary" />
+                {user?.avatarUrl && !user.avatarUrl.endsWith('default.png') ? 
+                    <img src={user.avatarUrl} alt={user?.nom || 'Avatar'} className="rounded-circle me-2" style={{width: '24px', height: '24px', objectFit: 'cover'}} /> :
+                    <FaUserCircle size="1.5rem" className="me-2 text-secondary" />
+                }
                 <div className="d-none d-lg-block">
                   <div className="fw-bold">{user?.nom || 'Utilisateur'}</div>
-                  <div className="small text-muted">{user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : ''}</div>
+                  <div className="small text-muted">{user?.role ? capitalizeFirstLetter(user.role) : ''}</div>
                 </div>
               </div>
             }

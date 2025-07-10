@@ -1,6 +1,9 @@
 const asyncHandler = require('express-async-handler');
+const path = require('path');
+const fs = require('fs');
 const Parametres = require('../models/Parametres');
 const { successResponse } = require('../utils/helpers');
+const storageConfig = require('../config/storage'); // Importer la config de stockage
 
 /**
  * @desc    Obtenir les paramètres de l'entreprise.
@@ -8,10 +11,8 @@ const { successResponse } = require('../utils/helpers');
  * @access  Private
  */
 exports.getParametres = asyncHandler(async (req, res) => {
-  // `findOne()` sans filtre récupère le premier (et seul) document de la collection.
   const parametres = await Parametres.findOne();
 
-  // Si aucun paramètre n'existe, on retourne un objet vide pour que le frontend puisse initialiser le formulaire.
   if (!parametres) {
     return successResponse(res, 200, 'Aucun paramètre trouvé. Prêt pour la création.', {});
   }
@@ -26,14 +27,13 @@ exports.getParametres = asyncHandler(async (req, res) => {
  * @access  Private/Admin
  */
 exports.updateParametres = asyncHandler(async (req, res) => {
-  // On s'assure de ne pas traiter le champ 'logo' dans cette fonction.
-  const { logo, ...dataToUpdate } = req.body;
+  // On s'assure de ne jamais mettre à jour des champs non modifiables comme 'logo' ici.
+  const { logo, logoUrl, _id, createdAt, updatedAt, ...dataToUpdate } = req.body;
 
   const options = {
     new: true,
     upsert: true,
     runValidators: true,
-    // setDefaultsOnInsert est important pour que les valeurs par défaut du schéma soient appliquées à la création.
     setDefaultsOnInsert: true,
   };
 
@@ -49,18 +49,30 @@ exports.updateParametres = asyncHandler(async (req, res) => {
  * @access  Private/Admin
  */
 exports.updateLogo = asyncHandler(async (req, res) => {
-    // Le middleware 'uploadLogo' a déjà traité le fichier et l'a placé dans req.file
     if (!req.file) {
         res.status(400);
-        throw new Error('Aucun fichier de logo n\'a été uploadé.');
+        throw new Error('Aucun fichier de logo n\'a été fourni.');
     }
 
-    // Le chemin relatif à stocker est dans req.file.path. On le nettoie.
-    // ex: "C:\projets\erp\server\uploads\logos\logo-123.png" -> "logos\logo-123.png"
-    const rootUploadsPath = require('path').join(process.cwd(), 'uploads');
-    const relativePath = req.file.path.replace(rootUploadsPath, '').replace(/\\/g, '/').substring(1);
+    // Récupérer les paramètres actuels pour connaître l'ancien logo
+    const currentParams = await Parametres.findOne();
+
+    // Si un ancien logo existe (et n'est pas le logo par défaut), on le supprime du disque
+    if (currentParams && currentParams.logo) {
+      const oldLogoPath = path.join(storageConfig.disks.local.root, currentParams.logo);
+      // fs.existsSync est synchrone, mais c'est acceptable ici car rapide.
+      if (fs.existsSync(oldLogoPath)) {
+        fs.unlink(oldLogoPath, (err) => {
+            if (err) console.error(`Échec de la suppression de l'ancien logo: ${oldLogoPath}`, err);
+            else console.log(`Ancien logo supprimé: ${oldLogoPath}`);
+        });
+      }
+    }
+
+    // Construire le chemin relatif à partir du chemin absolu du fichier uploadé
+    const relativePath = path.relative(storageConfig.disks.local.root, req.file.path).replace(/\\/g, '/');
     
-    // On met à jour ou on crée les paramètres avec le nouveau chemin du logo.
+    // Mettre à jour ou créer les paramètres avec le nouveau chemin du logo
     const options = {
         new: true,
         upsert: true,

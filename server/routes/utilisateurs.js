@@ -16,19 +16,15 @@ const {
 const { protect, authorize } = require('../middleware/auth');
 const { userValidationRules, idParamValidationRules, validate } = require('../middleware/validation');
 
-
 // --- Application globale du middleware 'protect' ---
 // Toutes les routes définies dans ce fichier nécessiteront une authentification.
 router.use(protect);
-
 
 // --- Route pour l'utilisateur connecté ---
 // Doit rester avant '/:id' pour ne pas être interprétée comme un ID.
 router.get('/me', getMe);
 
-
 // --- Routes d'Administration (réservées aux Admins) ---
-
 router.route('/')
   /**
    * @route   GET /api/utilisateurs
@@ -36,19 +32,18 @@ router.route('/')
    * @access  Private/Admin
    */
   .get(authorize(ROLES.ADMIN), getAllUsers)
-  
+
   /**
    * @route   POST /api/utilisateurs
    * @desc    Créer un nouvel utilisateur (par un admin).
    * @access  Private/Admin
    */
   .post(
-    authorize(ROLES.ADMIN), 
+    authorize(ROLES.ADMIN),
     userValidationRules(), // Valide les données du nouvel utilisateur
-    validate, 
+    validate,
     createUser
   );
-
 
 router.route('/:id')
   /**
@@ -57,36 +52,35 @@ router.route('/:id')
    * @access  Private/Admin
    */
   .get(
-    authorize(ROLES.ADMIN), 
+    authorize(ROLES.ADMIN),
     idParamValidationRules(), // Valide que l'ID est un MongoID valide
-    validate, 
+    validate,
     getUserById
   )
-  
+
   /**
    * @route   PUT /api/utilisateurs/:id
    * @desc    Mettre à jour un utilisateur.
    * @access  Private/Admin
    */
   .put(
-    authorize(ROLES.ADMIN), 
-    idParamValidationRules(), 
-    validate, 
+    authorize(ROLES.ADMIN),
+    idParamValidationRules(),
+    validate,
     updateUser
   )
-  
+
   /**
    * @route   DELETE /api/utilisateurs/:id
    * @desc    Désactiver (soft delete) un utilisateur.
    * @access  Private/Admin
    */
   .delete(
-    authorize(ROLES.ADMIN), 
-    idParamValidationRules(), 
-    validate, 
+    authorize(ROLES.ADMIN),
+    idParamValidationRules(),
+    validate,
     deleteUser
   );
-
 
 // 3. Exporter le routeur
 module.exports = router;

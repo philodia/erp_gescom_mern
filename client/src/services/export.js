@@ -15,7 +15,7 @@ import { saveAs } from 'file-saver';
 const downloadFile = async (apiCall, defaultFilename) => {
   try {
     const response = await apiCall;
-    
+
     // Récupérer le nom du fichier depuis les en-têtes de la réponse
     const contentDisposition = response.headers['content-disposition'];
     let filename = defaultFilename;
@@ -25,16 +25,16 @@ const downloadFile = async (apiCall, defaultFilename) => {
         filename = filenameMatch[1];
       }
     }
-    
+
     // Créer un Blob à partir des données de la réponse
     // Le 'responseType' doit être 'blob' ou 'arraybuffer' dans la config de l'appel api.
     const blob = new Blob([response.data], { type: response.headers['content-type'] });
-    
+
     // Utiliser file-saver pour déclencher le téléchargement
     saveAs(blob, filename);
-    
+
     return { success: true };
-    
+
   } catch (error) {
     console.error(`Erreur lors du téléchargement du fichier :`, error);
     // On pourrait essayer de lire le message d'erreur si la réponse est en JSON
@@ -50,11 +50,10 @@ const downloadFile = async (apiCall, defaultFilename) => {
     } else if (error.response && error.response.data) {
         errorMessage = error.response.data.message || errorMessage;
     }
-    
+
     return { success: false, error: errorMessage };
   }
 };
-
 
 /**
  * Télécharge une facture au format PDF.
@@ -80,14 +79,38 @@ const exportClientsExcel = (filters = {}) => {
   return downloadFile(apiCall, defaultFilename);
 };
 
-// Ajoutez d'autres fonctions d'export ici...
-// const exportRapportVentesPDF = (period) => { ... };
+/**
+ * Exporte un rapport de ventes au format PDF pour une période donnée.
+ * @param {string} period - La période pour laquelle générer le rapport (ex : '2023-01-01/2023-12-31').
+ */
+const exportRapportVentesPDF = (period) => {
+  const apiCall = api.get('/rapports/ventes/pdf', {
+    params: { period },
+    responseType: 'blob',
+  });
+  const defaultFilename = `rapport-ventes-${period}.pdf`;
+  return downloadFile(apiCall, defaultFilename);
+};
 
+/**
+ * Exporte une liste de produits au format Excel.
+ * @param {object} [filters] - Filtres optionnels pour l'export.
+ */
+const exportProduitsExcel = (filters = {}) => {
+  const apiCall = api.get('/produits/export/excel', {
+    params: filters,
+    responseType: 'blob',
+  });
+  const defaultFilename = `export-produits-${new Date().toISOString().slice(0, 10)}.xlsx`;
+  return downloadFile(apiCall, defaultFilename);
+};
 
 // Exporter les fonctions dans un objet
 const exportService = {
   exportFacturePDF,
   exportClientsExcel,
+  exportRapportVentesPDF,
+  exportProduitsExcel,
 };
 
 export default exportService;

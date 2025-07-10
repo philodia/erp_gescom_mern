@@ -4,57 +4,122 @@
    pour les différents thèmes de l'application.
    ========================================================================== */
 
-
-/* 
+/*
   =================================
   THÈME SOMBRE (DARK)
   =================================
 */
 [data-theme="dark"] {
   /* --- Couleurs Primaires --- */
-  --primary: #3b82f6;
+  --primary-color: #3b82f6;
   --primary-hover: #2563eb;
   --primary-light: rgba(59, 130, 246, 0.1);
-
-  --secondary: #9ca3af;
+  --secondary-color: #9ca3af;
   --secondary-hover: #6b7280;
 
   /* --- Couleurs Sémantiques --- */
-  --success: #22c55e;
-  --danger: #ef4444;
-  --warning: #f59e0b;
-  --info: #38bdf8;
+  --success-color: #22c55e;
+  --danger-color: #ef4444;
+  --warning-color: #f59e0b;
+  --info-color: #38bdf8;
 
   /* --- Couleurs de Fond (Background) --- */
-  --bg-primary: #111827;      /* Fond principal de l'application */
-  --bg-secondary: #1f2937;    /* Fond pour les cartes, modales, sidebar */
-  --bg-tertiary: #374151;      /* Fond pour les zones en surbrillance */
+  --bg-primary-color: #111827;      /* Fond principal de l'application */
+  --bg-secondary-color: #1f2937;    /* Fond pour les cartes, modales, sidebar */
+  --bg-tertiary-color: #374151;      /* Fond pour les zones en surbrillance */
 
   /* --- Couleurs de Texte --- */
-  --text-primary: #f9fafb;      /* Texte principal, titres */
-  --text-secondary: #d1d5db;    /* Texte plus clair, labels, aide */
-  --text-muted: #6b7280;        /* Texte le plus clair */
-  --text-on-primary-bg: #ffffff;/* Texte à utiliser sur un fond de couleur --primary */
-  --text-link: var(--primary);
+  --text-primary-color: #f9fafb;      /* Texte principal, titres */
+  --text-secondary-color: #d1d5db;    /* Texte plus clair, labels, aide */
+  --text-muted-color: #6b7280;        /* Texte le plus clair */
+  --text-on-primary-bg: #ffffff; /* Texte à utiliser sur un fond de couleur --primary */
+  --text-link-color: var(--primary-color);
 
   /* --- Couleurs des Bordures --- */
-  --border-primary: #374151;
-  --border-secondary: #4b5563; /* Bordure pour les inputs */
-  
+  --border-primary-color: #374151;
+  --border-secondary-color: #4b5563; /* Bordure pour les inputs */
+
   /* --- Autres --- */
   --box-shadow-sm: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.3);
   --box-shadow-md: 0 0.5rem 1rem rgba(0, 0, 0, 0.4);
 }
 
 /*
-  Vous pourriez ajouter d'autres thèmes ici à l'avenir.
-  Par exemple, un thème à fort contraste pour l'accessibilité.
-
-  [data-theme="high-contrast"] {
-    --bg-primary: #000000;
-    --bg-secondary: #111111;
-    --text-primary: #ffffff;
-    --primary: #ffff00;
-    ...etc
-  }
+  =================================
+  THÈME À FORT CONTRASTE (HIGH CONTRAST)
+  =================================
 */
+[data-theme="high-contrast"] {
+  /* --- Couleurs Primaires --- */
+  --primary-color: #ffff00;
+  --primary-hover: #e6e600;
+  --primary-light: rgba(255, 255, 0, 0.1);
+  --secondary-color: #000000;
+  --secondary-hover: #1a1a1a;
+
+  /* --- Couleurs Sémantiques --- */
+  --success-color: #00ff00;
+  --danger-color: #ff0000;
+  --warning-color: #ff9900;
+  --info-color: #00ffff;
+
+  /* --- Couleurs de Fond (Background) --- */
+  --bg-primary-color: #000000;
+  --bg-secondary-color: #111111;
+  --bg-tertiary-color: #222222;
+
+  /* --- Couleurs de Texte --- */
+  --text-primary-color: #ffffff;
+  --text-secondary-color: #cccccc;
+  --text-muted-color: #aaaaaa;
+  --text-on-primary-bg: #000000;
+  --text-link-color: var(--primary-color);
+
+  /* --- Couleurs des Bordures --- */
+  --border-primary-color: #ffffff;
+  --border-secondary-color: #cccccc;
+
+  /* --- Autres --- */
+  --box-shadow-sm: 0 0.125rem 0.25rem rgba(255, 255, 255, 0.5);
+  --box-shadow-md: 0 0.5rem 1rem rgba(255, 255, 255, 0.7);
+}
+
+/*
+  =================================
+  THÈME CLAIR (LIGHT)
+  =================================
+*/
+[data-theme="light"] {
+  /* --- Couleurs Primaires --- */
+  --primary-color: #0d6efd;
+  --primary-hover: #0b5ed7;
+  --primary-light: rgba(13, 110, 253, 0.1);
+  --secondary-color: #6c757d;
+  --secondary-hover: #5c636a;
+
+  /* --- Couleurs Sémantiques --- */
+  --success-color: #198754;
+  --danger-color: #dc3545;
+  --warning-color: #ffc107;
+  --info-color: #0dcaf0;
+
+  /* --- Couleurs de Fond (Background) --- */
+  --bg-primary-color: #f8f9fa;
+  --bg-secondary-color: #ffffff;
+  --bg-tertiary-color: #e9ecef;
+
+  /* --- Couleurs de Texte --- */
+  --text-primary-color: #212529;
+  --text-secondary-color: #6c757d;
+  --text-muted-color: #adb5bd;
+  --text-on-primary-bg: #ffffff;
+  --text-link-color: var(--primary-color);
+
+  /* --- Couleurs des Bordures --- */
+  --border-primary-color: #dee2e6;
+  --border-secondary-color: #ced4da;
+
+  /* --- Autres --- */
+  --box-shadow-sm: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+  --box-shadow-md: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}

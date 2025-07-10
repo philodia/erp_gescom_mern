@@ -1,130 +1,136 @@
-import React from 'react';
-import { useSelector } from 'react-redux';
-import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
-} from 'recharts';
-import { FaUsers, FaShoppingCart, FaDollarSign, FaFileInvoice } from 'react-icons/fa';
+import React, { useState, useEffect } from 'react';
+import { Row, Col, Card as BootstrapCard, Table } from 'react-bootstrap';
+import { toast } from 'react-hot-toast';
+import api from '../services/api';
 
-// Import de nos composants UI
-import Card from '../components/ui/Card';
+// --- Imports corrigés et organisés ---
+import { formatCurrency } from '../utils/formatters';
+import { getRelativeDate } from '../utils/dateUtils';
+
+// --- Composants ---
+import Breadcrumb from '../components/common/Breadcrumb';
 import LoadingSpinner from '../components/common/LoadingSpinner';
-import Alert from '../components/ui/Alert';
+import Card from '../components/ui/Card';
+import ChiffreAffairesChart from '../components/charts/ChiffreAffairesChart';
+import StockChart from '../components/charts/StockChart';
+import { FaDollarSign, FaShoppingCart, FaBoxes } from 'react-icons/fa';
 
-// Données factices pour la démonstration (à remplacer par les données de l'API/Redux)
-const kpiData = {
-  dailyRevenue: 1250000,
-  newClients: 5,
-  pendingOrders: 12,
-  invoicesToSend: 8,
-};
-
-const salesChartData = [
-  { name: 'Jan', Ventes: 400000 },
-  { name: 'Fév', Ventes: 300000 },
-  { name: 'Mar', Ventes: 500000 },
-  { name: 'Avr', Ventes: 450000 },
-  { name: 'Mai', Ventes: 600000 },
-  { name: 'Juin', Ventes: 550000 },
-];
-
-const recentActivities = [
-    { id: 1, type: 'vente', text: 'Nouvelle vente #V2024-101 pour Client A' },
-    { id: 2, type: 'client', text: 'Nouveau client enregistré: Société B' },
-    { id: 3, type: 'facture', text: 'Facture #F2024-098 marquée comme payée' },
-    { id: 4, type: 'stock', text: 'Alerte stock bas pour le produit "Stylo Bic"' },
-];
-
-// Composant pour les cartes de KPI
-const KpiCard = ({ title, value, icon, variant }) => (
-  <Card className={`kpi-card border-${variant} text-white bg-${variant}`}>
-    <Card.Body>
+// --- Composant Local pour les KPIs ---
+const KpiCard = ({ title, value, icon: Icon, color }) => (
+  <BootstrapCard className="shadow-sm h-100">
+    <BootstrapCard.Body>
       <div className="d-flex justify-content-between align-items-center">
         <div>
-          <h5 className="card-title text-uppercase">{title}</h5>
-          <h3>{value}</h3>
+          <div className="text-muted text-uppercase small">{title}</div>
+          <h4 className="fw-bold mb-0">{value}</h4>
         </div>
-        <div className="kpi-icon" style={{ opacity: 0.5 }}>
-          {icon}
+        <div className={`p-3 rounded-circle bg-light-${color}`}>
+          <Icon className={`text-${color}`} size="1.5rem" />
         </div>
       </div>
-    </Card.Body>
-  </Card>
+    </BootstrapCard.Body>
+  </BootstrapCard>
 );
 
-
 const Dashboard = () => {
-  const { user } = useSelector((state) => state.auth);
-  // Pour le futur:
-  // const { data, isLoading, error } = useSelector((state) => state.dashboard);
-  // const dispatch = useDispatch();
-  //
-  // useEffect(() => {
-  //   dispatch(fetchDashboardData());
-  // }, [dispatch]);
+  const [data, setData] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Pour la démo:
-  const isLoading = false;
-  const error = null;
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const responseData = await api.get('/dashboard');
+        setData(responseData);
+      } catch (error) {
+        toast.error("Impossible de charger les données du tableau de bord.");
+        console.error(error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
+    fetchDashboardData();
+  }, []);
+
+  // Afficher un spinner pleine page pendant le chargement initial
   if (isLoading) {
     return <LoadingSpinner asOverlay text="Chargement du tableau de bord..." />;
   }
-
-  if (error) {
-    return <Alert variant="danger">Impossible de charger les données du tableau de bord.</Alert>;
-  }
+  
+  // Extraire les données avec des valeurs par défaut pour éviter les erreurs
+  const kpis = data?.kpis || {};
+  const ventesRecentes = data?.ventes_recentes || [];
+  const topProduits = data?.top_produits_mois || [];
+  const salesOverTime = data?.sales_over_time || [];
 
   return (
-    <div>
-      <h2 className="mb-4">Bonjour, {user?.nom} !</h2>
+    <>
+      <Breadcrumb items={[{ label: 'Dashboard' }]} />
 
-      {/* Section des Indicateurs Clés de Performance (KPIs) */}
-      <div className="row">
-        <div className="col-lg-3 col-md-6">
-          <KpiCard title="Revenu du jour" value={`${kpiData.dailyRevenue.toLocaleString('fr-FR')} FCFA`} icon={<FaDollarSign />} variant="primary" />
-        </div>
-        <div className="col-lg-3 col-md-6">
-          <KpiCard title="Nouveaux Clients" value={`+${kpiData.newClients}`} icon={<FaUsers />} variant="success" />
-        </div>
-        <div className="col-lg-3 col-md-6">
-          <KpiCard title="Commandes en attente" value={kpiData.pendingOrders} icon={<FaShoppingCart />} variant="warning" />
-        </div>
-        <div className="col-lg-3 col-md-6">
-          <KpiCard title="Factures à envoyer" value={kpiData.invoicesToSend} icon={<FaFileInvoice />} variant="info" />
-        </div>
-      </div>
+      <Row className="mb-4">
+        <Col md={6} lg={3} className="mb-3">
+          <KpiCard title="CA du Jour (HT)" value={formatCurrency(kpis.ca_jour)} icon={FaDollarSign} color="primary" />
+        </Col>
+        <Col md={6} lg={3} className="mb-3">
+          <KpiCard title="CA du Mois (HT)" value={formatCurrency(kpis.ca_mois)} icon={FaDollarSign} color="success" />
+        </Col>
+        <Col md={6} lg={3} className="mb-3">
+          <KpiCard title="Ventes du Mois" value={kpis.commandes_mois || 0} icon={FaShoppingCart} color="info" />
+        </Col>
+        <Col md={6} lg={3} className="mb-3">
+          <KpiCard title="Stock Faible" value={kpis.produits_stock_faible || 0} icon={FaBoxes} color="warning" />
+        </Col>
+      </Row>
 
-      {/* Section des Graphiques */}
-      <div className="row mt-4">
-        <div className="col-lg-8">
-          <Card header="Évolution des ventes (6 derniers mois)">
-            <Card.Body>
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={salesChartData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis tickFormatter={(value) => `${(value / 1000)}k`} />
-                  <Tooltip formatter={(value) => [`${value.toLocaleString('fr-FR')} FCFA`, "Ventes"]}/>
-                  <Legend />
-                  <Line type="monotone" dataKey="Ventes" stroke="#8884d8" activeDot={{ r: 8 }} />
-                </LineChart>
-              </ResponsiveContainer>
-            </Card.Body>
-          </Card>
-        </div>
-        <div className="col-lg-4">
-           <Card header="Activités Récentes">
-              <Card.Body>
-                <ul className="list-group list-group-flush">
-                    {recentActivities.map(activity => (
-                        <li key={activity.id} className="list-group-item">{activity.text}</li>
-                    ))}
-                </ul>
-              </Card.Body>
-           </Card>
-        </div>
-      </div>
-    </div>
+      <Row>
+        <Col lg={12} className="mb-4">
+          <ChiffreAffairesChart data={salesOverTime} />
+        </Col>
+      </Row>
+
+      <Row>
+        <Col lg={7} className="mb-4">
+            <Card title="Dernières Ventes">
+                <div className="table-responsive">
+                    <Table hover>
+                        <thead>
+                            <tr>
+                                <th>Facture N°</th>
+                                <th>Client</th>
+                                <th>Date</th>
+                                <th className="text-end">Montant</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {ventesRecentes.length > 0 ? (
+                                ventesRecentes.map(vente => (
+                                    <tr key={vente._id}>
+                                        <td>{vente.numero}</td>
+                                        <td>{vente.client?.nom || 'N/A'}</td>
+                                        <td>{getRelativeDate(vente.dateEmission)}</td>
+                                        <td className="text-end">{formatCurrency(vente.totalTTC)}</td>
+                                    </tr>
+                                ))
+                            ) : (
+                                <tr>
+                                    <td colSpan="4" className="text-center text-muted">Aucune vente récente.</td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </Table>
+                </div>
+            </Card>
+        </Col>
+        <Col lg={5} className="mb-4">
+          <StockChart 
+            data={topProduits} 
+            title="Top 5 Produits (par CA ce mois-ci)"
+            dataKey="caTotal"
+            name="Chiffre d'Affaires"
+          />
+        </Col>
+      </Row>
+    </>
   );
 };
 

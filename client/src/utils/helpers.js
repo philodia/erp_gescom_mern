@@ -4,27 +4,20 @@
 
 /**
  * Génère une chaîne de classes CSS conditionnelles.
- * Très utile pour appliquer des styles dynamiquement dans les composants.
- *
- * @param {object} classes - Un objet où les clés sont les noms de classe et les valeurs des booléens.
- * @returns {string} Une chaîne de noms de classe séparés par des espaces.
- * @example
- * // returns "btn btn-primary active"
- * classNames({ 'btn': true, 'btn-primary': true, 'btn-sm': false, 'active': true });
+ * @param {object} classes - Objet de classes { 'ma-classe': true, 'autre-classe': false }.
+ * @returns {string} Une chaîne de noms de classe.
  */
 export const classNames = (classes) => {
   return Object.entries(classes)
-    .filter(([key, value]) => Boolean(value))
+    .filter(([, value]) => Boolean(value))
     .map(([key]) => key)
     .join(' ');
 };
 
-
 /**
  * Génère une URL de query string à partir d'un objet de paramètres.
- *
- * @param {object} params - L'objet de paramètres (ex: { page: 2, search: 'test' }).
- * @returns {string} La query string (ex: "?page=2&search=test").
+ * @param {object} params - L'objet de paramètres.
+ * @returns {string} La query string.
  */
 export const generateQueryString = (params) => {
   const query = Object.entries(params)
@@ -35,51 +28,52 @@ export const generateQueryString = (params) => {
   return query ? `?${query}` : '';
 };
 
-
 /**
- * Récupère une valeur imbriquée dans un objet en utilisant un chemin de chaîne.
- *
+ * Récupère une valeur imbriquée dans un objet en utilisant un chemin de chaîne de manière sécurisée.
  * @param {object} obj - L'objet dans lequel chercher.
  * @param {string} path - Le chemin de la propriété (ex: 'client.adresse.ville').
- * @param {any} [defaultValue=null] - La valeur à retourner si le chemin n'est pas trouvé.
+ * @param {any} [defaultValue=null] - La valeur à retourner si le chemin n'est pas trouvé ou invalide.
  * @returns {any} La valeur trouvée ou la valeur par défaut.
  */
 export const getNestedValue = (obj, path, defaultValue = null) => {
-  if (!obj || typeof path !== 'string') {
+  // Gérer les cas où l'objet ou le chemin sont invalides dès le départ.
+  if (obj === null || typeof obj !== 'object' || typeof path !== 'string') {
     return defaultValue;
   }
   
-  const value = path.split('.').reduce((o, key) => (o && o[key] !== 'undefined' ? o[key] : undefined), obj);
+  // La méthode reduce est concise et efficace pour cela.
+  const value = path.split('.').reduce((current, key) => {
+    // S'assurer que 'current' est un objet avant de tenter d'accéder à la clé.
+    return (current && typeof current === 'object') ? current[key] : undefined;
+  }, obj);
   
-  return value === undefined ? defaultValue : value;
+  // Retourner la valeur trouvée, ou la valeur par défaut si le résultat est undefined.
+  return value !== undefined ? value : defaultValue;
 };
 
 
 /**
  * Crée un délai (debounce) pour l'exécution d'une fonction.
- * Très utile pour les barres de recherche, pour ne pas lancer une requête API à chaque frappe.
- *
  * @param {function} func - La fonction à "débouncer".
  * @param {number} [delay=500] - Le délai en millisecondes.
  * @returns {function} La nouvelle fonction "débouncée".
  */
 export const debounce = (func, delay = 500) => {
   let timeoutId;
-  return (...args) => {
+  return function(...args) {
+    const context = this;
     clearTimeout(timeoutId);
     timeoutId = setTimeout(() => {
-      func.apply(this, args);
+      func.apply(context, args);
     }, delay);
   };
 };
 
 /**
- * Génère un identifiant unique simple pour les clés dans les listes React.
- * A utiliser uniquement lorsque les données n'ont pas d'ID stable.
- *
+ * Génère un identifiant unique simple.
  * @param {string} [prefix='key'] - Un préfixe pour l'ID.
  * @returns {string} Un ID unique.
  */
 export const generateUniqueId = (prefix = 'key') => {
-    return `${prefix}-${Math.random().toString(36).substring(2, 9)}`;
+    return `${prefix}-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 };

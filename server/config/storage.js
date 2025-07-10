@@ -12,7 +12,6 @@ const storageConfig = {
    * En production, il est fortement recommandé d'utiliser 's3' ou un équivalent.
    */
   disk: process.env.STORAGE_DISK || 'local',
-
   /**
    * Configurations pour le stockage sur le disque local du serveur.
    */
@@ -21,12 +20,11 @@ const storageConfig = {
       // Le chemin de base où les fichiers seront stockés.
       // `process.cwd()` est la racine du projet Node.js (ici, le dossier 'server').
       root: require('path').join(process.cwd(), 'uploads'),
-      
+
       // L'URL de base pour accéder à ces fichiers depuis le frontend.
       // Cela suppose que vous avez configuré un middleware static dans Express.
       url: `${process.env.APP_URL || 'http://localhost:5000'}/uploads/images`,
     },
-
     /**
      * Configurations pour le stockage sur Amazon S3.
      * À décommenter et compléter lorsque vous passerez en production.
@@ -41,7 +39,6 @@ const storageConfig = {
       url: `https://${process.env.AWS_BUCKET}.s3.${process.env.AWS_DEFAULT_REGION}.amazonaws.com`,
     },
   },
-
   /**
    * Chemins des sous-dossiers pour chaque type de fichier.
    * Cela permet de garder le dossier 'uploads' bien organisé.

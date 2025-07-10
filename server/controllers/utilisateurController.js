@@ -47,16 +47,13 @@ exports.createUser = asyncHandler(async (req, res) => {
     // Cette fonction est similaire à `register` mais est destinée à être appelée par un admin.
     const { nom, email, password, role } = req.body;
     const userExists = await User.findOne({ email });
-
     if (userExists) {
       res.status(400);
       throw new Error('Un utilisateur avec cet email existe déjà.');
     }
-
     const user = await User.create({ nom, email, password, role });
     successResponse(res, 201, 'Utilisateur créé avec succès par l\'administrateur.', user);
 });
-
 
 /**
  * @desc    Mettre à jour un utilisateur (par un admin).
@@ -65,12 +62,11 @@ exports.createUser = asyncHandler(async (req, res) => {
  */
 exports.updateUser = asyncHandler(async (req, res) => {
   const user = await User.findById(req.params.id);
-
   if (!user) {
     res.status(404);
     throw new Error('Utilisateur non trouvé.');
   }
-  
+
   // On ne met à jour que les champs fournis.
   user.nom = req.body.nom || user.nom;
   user.email = req.body.email || user.email;
@@ -78,9 +74,8 @@ exports.updateUser = asyncHandler(async (req, res) => {
   if (req.body.isActive !== undefined) {
     user.isActive = req.body.isActive;
   }
-  
-  // La modification de mot de passe doit se faire via une route et un contrôleur dédiés.
 
+  // La modification de mot de passe doit se faire via une route et un contrôleur dédiés.
   const updatedUser = await user.save();
   successResponse(res, 200, 'Utilisateur mis à jour.', updatedUser);
 });
@@ -92,15 +87,13 @@ exports.updateUser = asyncHandler(async (req, res) => {
  */
 exports.deleteUser = asyncHandler(async (req, res) => {
   const user = await User.findById(req.params.id);
-
   if (!user) {
     res.status(404);
     throw new Error('Utilisateur non trouvé.');
   }
-
   // Soft delete: on ne supprime pas, on désactive.
   user.isActive = false;
   await user.save();
-  
+
   successResponse(res, 200, 'Utilisateur désactivé avec succès.');
 });

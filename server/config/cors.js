@@ -8,7 +8,6 @@ require('dotenv').config({ path: require('path').join(__dirname, '..', '..', '.e
 const allowedOrigins = [
   // L'URL de votre client React en développement
   'http://localhost:3000',
-
   // Ajoutez ici les URLs de votre application en production et en pré-production
   // process.env.FRONTEND_URL_PROD,
   // process.env.FRONTEND_URL_STAGING,
@@ -30,7 +29,7 @@ const corsOptions = {
     if (process.env.NODE_ENV === 'development' && !origin) {
       return callback(null, true);
     }
-    
+
     // Si l'origine de la requête est dans notre liste blanche, on l'autorise.
     if (allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
@@ -39,29 +38,24 @@ const corsOptions = {
       callback(new Error('L\'accès à cette ressource est interdit par la politique CORS.'));
     }
   },
-
   /**
    * Les méthodes HTTP que nous autorisons.
    */
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-
   /**
    * Les en-têtes que le client est autorisé à envoyer.
    * 'Authorization' est crucial pour les tokens JWT.
    */
   allowedHeaders: ['Content-Type', 'Authorization'],
-
   /**
    * Permet au client d'envoyer des informations d'identification (comme les cookies ou les tokens d'autorisation).
    */
   credentials: true,
-
   /**
    * Code de statut à renvoyer pour les requêtes de pré-vérification (preflight) OPTIONS.
    * 204 No Content est une valeur standard et efficace.
    */
   optionsSuccessStatus: 204
 };
-
 
 module.exports = corsOptions;

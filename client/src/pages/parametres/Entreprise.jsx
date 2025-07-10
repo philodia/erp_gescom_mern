@@ -1,153 +1,153 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Form, Button, Card, Row, Col, Alert, Spinner } from 'react-bootstrap';
+import { Row, Col, Form, Image } from 'react-bootstrap';
+import { toast } from 'react-hot-toast';
+import useForm from '../../hooks/useForm';
+// Importer le schéma de validation depuis sa source unique
+import { parametresValidationSchema } from '../../utils/validators';
 import api from '../../services/api';
 
+// Importer nos composants UI personnalisés
+import Card from '../../components/ui/Card';
+import Input from '../../components/ui/Input';
+import TextArea from '../../components/ui/TextArea';
+import Button from '../../components/ui/Button';
+import LoadingSpinner from '../../components/common/LoadingSpinner';
+import Breadcrumb from '../../components/common/Breadcrumb';
+
 const Entreprise = () => {
-  // État pour stocker les données du formulaire, initialisé pour correspondre à la structure du modèle
-  const [settings, setSettings] = useState({
-    nomEntreprise: '',
-    adresse: { rue: '', ville: '', codePostal: '', pays: 'Sénégal' },
-    telephone: '',
-    email: '',
-    siteWeb: '',
-    numeroTVA: '', // NINEA / RCCM
-    mentionsLegales: '',
-    logoUrl: '',
-  });
+    const [isLoadingPage, setIsLoadingPage] = useState(true);
+    const [logoPreview, setLogoPreview] = useState(null);
+    const [isUploading, setIsUploading] = useState(false);
 
-  // États pour gérer l'expérience utilisateur
-  const [loading, setLoading] = useState(true); // Pour le chargement initial des données
-  const [saving, setSaving] = useState(false);   // Pour l'état de sauvegarde
-  const [message, setMessage] = useState({ type: '', text: '' }); // Pour les notifications
-
-  // useEffect pour charger les paramètres au montage du composant
-  useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        const { data } = await api.get('/parametres');
-        // Si des données existent, on les charge dans l'état.
-        if (data && Object.keys(data).length > 0) {
-            // On s'assure que la structure est préservée même si certains champs sont absents
-            setSettings(prev => ({ ...prev, ...data, adresse: { ...prev.adresse, ...data.adresse } }));
+    // Fonction de soumission pour le hook useForm
+    const handleSave = async (data) => {
+        try {
+            // L'API retourne maintenant directement les données mises à jour
+            const { data: updatedSettings } = await api.put('/parametres', data);
+            setFormData(updatedSettings); // Mettre à jour l'état du formulaire
+            toast.success('Paramètres enregistrés avec succès !');
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'Erreur lors de l\'enregistrement.');
         }
-      } catch (error) {
-        console.error("Erreur lors du chargement des paramètres :", error);
-        setMessage({ type: 'danger', text: 'Impossible de charger les paramètres de l\'entreprise.' });
-      } finally {
-        setLoading(false); // On a fini de charger
-      }
     };
-    fetchSettings();
-  }, []); // Le tableau vide [] signifie que cet effet ne s'exécute qu'une fois.
+    
+    // Initialisation de notre hook useForm
+    const {
+        formData,
+        setFormData,
+        errors,
+        isSubmitting,
+        handleChange,
+        handleSubmit,
+    } = useForm(
+        { // S'assurer que la structure initiale correspond au modèle, même si vide
+            nomEntreprise: '',
+            adresse: { rue: '', ville: '', codePostal: '', pays: 'Sénégal' },
+            telephone: '', email: '', siteWeb: '', numeroTVA: '', mentionsLegales: '',
+        }, 
+        parametresValidationSchema, // Utiliser le schéma importé
+        handleSave
+    );
 
-  // Gère les changements dans les champs du formulaire
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    // Gestion spéciale pour les champs d'adresse imbriqués
-    if (name.startsWith('adresse.')) {
-        const field = name.split('.')[1];
-        setSettings(prev => ({ ...prev, adresse: { ...prev.adresse, [field]: value } }));
-    } else {
-        setSettings(prev => ({ ...prev, [name]: value }));
+    // Effet pour charger les données initiales
+    useEffect(() => {
+        const fetchSettings = async () => {
+            try {
+                // L'API retourne un objet { success, message, data }
+                const response = await api.get('/parametres');
+                const settingsData = response.data || {};
+                
+                if (Object.keys(settingsData).length > 0) {
+                    setFormData(settingsData);
+                    setLogoPreview(settingsData.logoUrl);
+                }
+            } catch (error) {
+                toast.error("Impossible de charger les paramètres de l'entreprise.");
+            } finally {
+                setIsLoadingPage(false);
+            }
+        };
+        fetchSettings();
+    }, [setFormData]); // setFormData est stable et ne causera pas de re-fetch
+
+    // Gérer l'upload du logo
+    const handleLogoChange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const uploadFormData = new FormData();
+        uploadFormData.append('logo', file);
+        
+        setIsUploading(true);
+        try {
+            const response = await api.put('/parametres/logo', uploadFormData, {
+                headers: { 'Content-Type': 'multipart/form-data' },
+            });
+            setLogoPreview(response.data.logoUrl);
+            toast.success('Logo mis à jour avec succès !');
+        } catch (error) {
+            toast.error(error.response?.data?.message || 'Erreur lors de l\'upload du logo.');
+        } finally {
+            setIsUploading(false);
+        }
+    };
+    
+    if (isLoadingPage) {
+        return <LoadingSpinner asOverlay text="Chargement des paramètres..." />;
     }
-  };
 
-  // Gère la soumission du formulaire
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setSaving(true);
-    setMessage({ type: '', text: '' });
-    try {
-        const response = await api.put('/parametres', settings);
-        setMessage({ type: 'success', text: response.data.message || 'Paramètres enregistrés avec succès !' });
-    } catch (error) {
-        console.error("Erreur lors de l'enregistrement :", error);
-        setMessage({ type: 'danger', text: error.response?.data?.message || 'Une erreur est survenue.' });
-    } finally {
-        setSaving(false);
-    }
-  };
-
-  // Affiche un spinner pendant le chargement initial
-  if (loading) {
-    return <div className="d-flex justify-content-center mt-5"><Spinner animation="border" /></div>;
-  }
-
-  return (
-    <Container className="mt-4">
-      <Card className="shadow-sm">
-        <Card.Header as="h4">Paramètres de l'entreprise</Card.Header>
-        <Card.Body>
-          {message.text && <Alert variant={message.type} onClose={() => setMessage({ type: '', text: ''})} dismissible>{message.text}</Alert>}
-          
-          <Form onSubmit={handleSubmit}>
-            <h5>Informations Générales</h5>
-            <hr/>
+    return (
+        <>
+            <Breadcrumb items={[{ label: 'Paramètres' }, { label: 'Entreprise' }]} />
             <Row>
-              <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Nom de l'entreprise</Form.Label>
-                  <Form.Control type="text" name="nomEntreprise" value={settings.nomEntreprise} onChange={handleChange} required />
-                </Form.Group>
-              </Col>
-               <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label>NINEA / RCCM</Form.Label>
-                  <Form.Control type="text" name="numeroTVA" value={settings.numeroTVA} onChange={handleChange} />
-                </Form.Group>
-              </Col>
-              <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Téléphone</Form.Label>
-                  <Form.Control type="tel" name="telephone" value={settings.telephone} onChange={handleChange} />
-                </Form.Group>
-              </Col>
-              <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Adresse email</Form.Label>
-                  <Form.Control type="email" name="email" value={settings.email} onChange={handleChange} />
-                </Form.Group>
-              </Col>
-            </Row>
+                <Col md={4} className="mb-3">
+                    <Card title="Logo de l'entreprise">
+                        <div className="text-center">
+                            <Image src={logoPreview || '/default_logo.png'} alt="Logo de l'entreprise" fluid thumbnail className="mb-3" style={{ height: '150px', objectFit: 'contain' }}/>
+                            <Form.Group controlId="formFile" className="mb-3">
+                                <Form.Control type="file" onChange={handleLogoChange} disabled={isUploading} accept="image/png, image/jpeg, image/gif" />
+                            </Form.Group>
+                            {isUploading && <LoadingSpinner text="Upload en cours..." />}
+                        </div>
+                    </Card>
+                </Col>
+                <Col md={8}>
+                    <Card title="Informations de l'entreprise">
+                        <Form noValidate onSubmit={handleSubmit}>
+                            <Row>
+                                <Col md={6}>
+                                    <Input label="Nom de l'entreprise" name="nomEntreprise" value={formData.nomEntreprise || ''} onChange={handleChange} error={errors.nomEntreprise} required />
+                                </Col>
+                                <Col md={6}>
+                                    <Input label="NINEA / RCCM" name="numeroTVA" value={formData.numeroTVA || ''} onChange={handleChange} />
+                                </Col>
+                                <Col md={6}>
+                                    <Input label="Email de contact" name="email" type="email" value={formData.email || ''} onChange={handleChange} error={errors.email} />
+                                </Col>
+                                <Col md={6}>
+                                    <Input label="Téléphone" name="telephone" value={formData.telephone || ''} onChange={handleChange} />
+                                </Col>
+                            </Row>
+                            <hr />
+                            <h5>Adresse</h5>
+                            <Input label="Rue" name="adresse.rue" value={formData.adresse?.rue || ''} onChange={handleChange} />
+                            <Row>
+                                <Col md={6}><Input label="Ville" name="adresse.ville" value={formData.adresse?.ville || ''} onChange={handleChange} /></Col>
+                                <Col md={6}><Input label="Pays" name="adresse.pays" value={formData.adresse?.pays || ''} onChange={handleChange} /></Col>
+                            </Row>
+                            <hr />
+                            <h5>Informations pour les documents</h5>
+                            <TextArea label="Mentions légales (bas de page)" name="mentionsLegales" value={formData.mentionsLegales || ''} onChange={handleChange} rows={3} />
 
-            <h5 className="mt-4">Adresse</h5>
-            <hr/>
-            <Row>
-              <Col md={12}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Rue</Form.Label>
-                  <Form.Control type="text" name="adresse.rue" value={settings.adresse.rue} onChange={handleChange} />
-                </Form.Group>
-              </Col>
-              <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Ville</Form.Label>
-                  <Form.Control type="text" name="adresse.ville" value={settings.adresse.ville} onChange={handleChange} />
-                </Form.Group>
-              </Col>
-              <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Pays</Form.Label>
-                  <Form.Control type="text" name="adresse.pays" value={settings.adresse.pays} onChange={handleChange} />
-                </Form.Group>
-              </Col>
+                            <div className="text-end mt-3">
+                                <Button type="submit" isLoading={isSubmitting}>Enregistrer les modifications</Button>
+                            </div>
+                        </Form>
+                    </Card>
+                </Col>
             </Row>
-            
-            <h5 className="mt-4">Informations pour les documents</h5>
-            <hr/>
-            <Form.Group className="mb-3">
-              <Form.Label>Mentions légales (bas de page)</Form.Label>
-              <Form.Control as="textarea" rows={3} name="mentionsLegales" value={settings.mentionsLegales} onChange={handleChange} />
-            </Form.Group>
-
-            <Button type="submit" variant="primary" disabled={saving}>
-              {saving ? <><Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true"/> Enregistrement...</> : 'Enregistrer les modifications'}
-            </Button>
-          </Form>
-        </Card.Body>
-      </Card>
-    </Container>
-  );
+        </>
+    );
 };
 
 export default Entreprise;

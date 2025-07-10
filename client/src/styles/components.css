@@ -6,16 +6,30 @@
 .data-table-header th {
   cursor: pointer;
   user-select: none; /* Empêche la sélection du texte du header en cliquant */
+  padding: 12px 15px; /* Ajoute un peu de padding pour un meilleur espace */
+  background-color: var(--bg-secondary-color);
+  transition: background-color 0.2s ease; /* Ajoute une transition pour un effet fluide */
 }
 
 .data-table-header th:hover {
-  background-color: rgba(0,0,0,0.05);
+  background-color: rgba(0, 0, 0, 0.05);
 }
 
 /* --- Card Component --- */
-/* On peut ajouter des variations de cartes si besoin */
+.card {
+  border-radius: 8px; /* Coins légèrement arrondis pour un look moderne */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Ombre légère pour la profondeur */
+  transition: transform 0.2s ease, box-shadow 0.2s ease; /* Transition pour les effets de survol */
+}
+
+.card:hover {
+  transform: translateY(-2px); /* Lève légèrement la carte au survol */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15); /* Ombre plus prononcée au survol */
+}
+
 .card-header-icon {
-    font-size: 1.2rem;
+  font-size: 1.2rem;
+  color: var(--primary-color); /* Utilise la couleur primaire pour les icônes */
 }
 
 /* --- Dropdown Component --- */
@@ -25,17 +39,25 @@
 
 .dropdown-toggle-no-caret {
   cursor: pointer;
+  padding: 8px 12px; /* Ajoute un padding pour un meilleur espace */
+  border-radius: 4px; /* Coins légèrement arrondis */
+}
+
+.dropdown-toggle-no-caret:hover {
+  background-color: rgba(0, 0, 0, 0.05); /* Fond léger au survol */
 }
 
 /* --- Tabs Component --- */
 .custom-tabs .nav-link {
   color: var(--text-secondary);
   border-bottom: 2px solid transparent;
-  padding-bottom: 0.75rem;
+  padding: 10px 15px;
+  transition: all 0.3s ease; /* Transition pour un effet fluide */
 }
 
 .custom-tabs .nav-link:hover {
   border-color: var(--border-color);
+  color: var(--text-primary);
 }
 
 .custom-tabs .nav-link.active {
@@ -45,7 +67,7 @@
   font-weight: 500;
 }
 
-/* Retire la bordure moche autour du contenu des onglets */
+/* Retire la bordure autour du contenu des onglets */
 .custom-tabs .tab-content > .active {
   background-color: transparent !important;
   border: none;
@@ -53,23 +75,18 @@
 
 /* Ajoute un padding au contenu de l'onglet, s'il n'est pas dans un div séparé */
 .custom-tabs .tab-pane {
-  padding-top: 1rem;
+  padding: 15px;
 }
 
 /* --- Layout Components (Header, Sidebar) --- */
-/*
-  Note: Nous avons déjà mis la plupart de ces styles dans globals.css
-  car ils sont fondamentaux pour le layout. On peut les déplacer ici
-  si on préfère une séparation plus stricte.
-  Je les remets ici pour référence, commentés.
-*/
-
-/*
 .app-header {
   background-color: var(--bg-secondary-color);
   border-bottom: 1px solid var(--border-color);
   min-height: 60px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
 }
 
 .app-sidebar {
@@ -79,6 +96,13 @@
   border-right: 1px solid var(--border-color);
   transition: all 0.3s;
 }
+
+.app-sidebar ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
 .app-sidebar ul li a {
   padding: 10px 20px;
   font-size: 1rem;
@@ -86,17 +110,23 @@
   align-items: center;
   color: var(--text-secondary);
   transition: all 0.2s;
+  text-decoration: none;
 }
+
+.app-sidebar ul li a:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
 .app-sidebar ul li a.active {
   background-color: var(--primary-color);
   color: var(--text-on-primary-bg, #fff);
   font-weight: 500;
 }
-*/
 
 /* --- Placeholder pour le contenu en chargement --- */
 .loading-placeholder {
-  animation: pulse-bg 1s infinite;
+  animation: pulse-bg 1.5s infinite ease-in-out;
+  border-radius: 4px;
 }
 
 @keyframes pulse-bg {
@@ -106,11 +136,54 @@
 }
 
 [data-theme="dark"] .loading-placeholder {
-  animation: pulse-bg-dark 1s infinite;
+  animation: pulse-bg-dark 1.5s infinite ease-in-out;
 }
 
 @keyframes pulse-bg-dark {
   0% { background-color: #374151; }
   50% { background-color: #4b5563; }
   100% { background-color: #374151; }
+}
+
+/* --- Boutons --- */
+.btn {
+  border-radius: 4px;
+  padding: 8px 16px;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+}
+
+/* --- Formulaires --- */
+.form-control {
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+  padding: 10px;
+  transition: border-color 0.3s ease;
+}
+
+.form-control:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 0.2rem rgba(38, 143, 255, 0.25);
+}
+
+/* --- Footer Component --- */
+.app-footer {
+  padding: var(--spacing-md) var(--spacing-lg);
+  background-color: var(--bg-secondary);
+  border-top: 1px solid var(--border-primary);
+  color: var(--text-secondary);
+  font-size: 0.875rem; /* un peu plus petit */
+}
+
+.app-footer a {
+    color: var(--text-secondary);
+    text-decoration: none;
+}
+
+.app-footer a:hover {
+    color: var(--text-primary);
+    text-decoration: underline;
 }

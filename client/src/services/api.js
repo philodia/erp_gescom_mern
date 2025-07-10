@@ -1,6 +1,7 @@
 import axios from 'axios';
-import config from '../utils/config'; // Importer notre configuration globale
-import { LOCAL_STORAGE_KEYS } from '../utils/constants'; // Importer nos constantes
+import config from '../utils/config';
+import storageService from './storage'; // <-- Importer notre service de stockage
+import { LOCAL_STORAGE_KEYS } from '../utils/constants';
 
 // 1. Création de l'instance Axios en utilisant la configuration centralisée
 const api = axios.create({
@@ -11,56 +12,64 @@ const api = axios.create({
   },
 });
 
-// 2. Mise en place d'un intercepteur de requête
+// 2. Intercepteur de REQUÊTE pour ajouter le token d'authentification
 api.interceptors.request.use(
   (axiosConfig) => {
-    // Utiliser la clé de token depuis nos constantes
-    const tokenKey = LOCAL_STORAGE_KEYS.TOKEN;
-    const token = localStorage.getItem(tokenKey);
+    // Utiliser notre storageService pour récupérer le token
+    const token = storageService.getItem(LOCAL_STORAGE_KEYS.TOKEN);
 
     if (token) {
       axiosConfig.headers['Authorization'] = `Bearer ${token}`;
     }
-
     return axiosConfig;
   },
   (error) => {
+    // Renvoyer une promesse rejetée si la configuration de la requête échoue
     return Promise.reject(error);
   }
 );
 
-// 3. Mise en place d'un intercepteur de réponse pour la gestion globale des erreurs
+// 3. Intercepteur de RÉPONSE pour la gestion globale des succès et des erreurs
 api.interceptors.response.use(
   (response) => {
-    // Si la réponse est réussie, on la retourne.
-    // On peut aussi choisir de ne retourner que response.data pour simplifier le code
-    // dans les services et les slices Redux.
-    return response;
+    // Si la requête réussit (statut 2xx), on retourne directement les données `response.data`.
+    // Cela évite d'avoir à faire `response.data` dans chaque appel de service.
+    return response.data;
   },
   (error) => {
-    // Gérer le cas où la requête échoue à cause d'un problème réseau
-    if (!error.response) {
-      console.error('Erreur réseau ou serveur inaccessible:', error.message);
-      // On pourrait déclencher une notification globale pour l'utilisateur ici.
+    const { response } = error;
+    
+    // Cas 1: Erreur réseau ou serveur inaccessible (pas de réponse)
+    if (!response) {
+      console.error('Erreur réseau ou serveur inaccessible. Veuillez vérifier votre connexion.', error);
+      // On pourrait ici déclencher une notification toast globale pour l'utilisateur.
+      // toast.error('Erreur réseau. Impossible de joindre le serveur.');
+      return Promise.reject(new Error('Erreur réseau.'));
     }
 
-    // Gérer les erreurs 401 (Non autorisé)
-    if (error.response && error.response.status === 401) {
-      const tokenKey = LOCAL_STORAGE_KEYS.TOKEN;
-      // On vérifie qu'il y avait bien un token. Si non, l'utilisateur n'était
-      // simplement pas connecté, ce qui n'est pas une erreur à gérer ici.
-      if (localStorage.getItem(tokenKey)) {
-        console.warn('Token invalide ou expiré. Déconnexion de l\'utilisateur.');
-        localStorage.removeItem(tokenKey);
-        // Rediriger vers la page de login, sauf si on y est déjà.
+    // Cas 2: Erreur 401 - Non autorisé (token invalide ou expiré)
+    // C'est le cas le plus important à gérer globalement.
+    if (response.status === 401) {
+      // On vérifie qu'un token existait, pour ne pas déconnecter un utilisateur non authentifié.
+      if (storageService.getItem(LOCAL_STORAGE_KEYS.TOKEN)) {
+        console.warn('Session invalide ou expirée. Déconnexion...');
+        // Vider toutes les données de session via le service
+        storageService.clear();
+        // Redirection forcée vers la page de connexion
         if (window.location.pathname !== '/login') {
-            window.location.href = '/login'; // href pour un rechargement complet
+            window.location.href = '/login';
         }
       }
     }
     
-    // On rejette l'erreur pour qu'elle puisse être traitée par le code appelant
-    // (ex: dans le `rejectWithValue` d'un thunk Redux).
+    // Cas 3: Autres erreurs serveur (400, 403, 404, 500...)
+    // On ne fait rien de spécial ici. On se contente de rejeter la promesse.
+    // L'erreur sera attrapée par le bloc `catch` du code qui a initié l'appel
+    // (par exemple, dans un `thunk` Redux ou un `useEffect` de composant).
+    // Le message d'erreur est déjà dans `error.response.data.message`.
+    console.error(`Erreur API: ${response.status} - ${response.data?.message || error.message}`);
+
+    // Rejeter l'erreur pour que le code appelant puisse la traiter
     return Promise.reject(error);
   }
 );

@@ -1,16 +1,16 @@
 /* ==========================================================================
    Styles d'impression pour l'application
    ========================================================================== */
-
 @media print {
-
   /* --- CACHER LES ÉLÉMENTS D'INTERFACE NON NÉCESSAIRES --- */
-  
+
   /* Cacher le header, la sidebar, et les pieds de page de layout */
   .app-header,
   .app-sidebar,
   .app-footer,
-  .breadcrumb-container {
+  .breadcrumb-container,
+  .ad-banner,
+  .social-media-links {
     display: none !important;
   }
 
@@ -31,12 +31,14 @@
     margin-left: 0 !important;
     width: 100% !important;
     padding: 0 !important;
+    box-sizing: border-box;
   }
 
   /* Retirer les ombres et les bordures inutiles des cartes */
   .card {
     border: none !important;
     box-shadow: none !important;
+    margin-bottom: 20px; /* Ajouter un espace entre les cartes */
   }
 
   /* Assurer que le fond est blanc et le texte est noir pour l'économie d'encre */
@@ -46,35 +48,40 @@
   }
 
   /* --- OPTIMISER LA TYPOGRAPHIE ET LES ÉLÉMENTS --- */
-  
+
   /* Utiliser une police avec serifs, souvent plus lisible sur papier */
   body {
-    font-family: 'Times New Roman', Times, serif;
+    font-family: 'Times New Roman', Times, serif !important;
     font-size: 12pt; /* Taille de police standard pour les documents */
+    line-height: 1.5; /* Améliore la lisibilité */
   }
 
   /* S'assurer que les liens sont visibles mais pas forcément bleus */
   a {
     color: #000000 !important;
-    text-decoration: none;
+    text-decoration: underline; /* Souligner les liens pour une meilleure visibilité */
   }
 
   /* Afficher l'URL complète après les liens (utile pour les documents imprimés) */
   a[href^="http"]:after {
     content: " (" attr(href) ")";
     font-size: 90%;
+    word-break: break-all; /* Permet de casser les longues URLs */
   }
 
   /* Ne pas afficher l'URL pour les liens internes de l'application */
   a[href^="/"]:after, a[href^="#"]:after {
     content: "";
   }
-  
-  /* --- OPTIMISER LES TABLEAUX --- */
 
+  /* --- OPTIMISER LES TABLEAUX --- */
   .table, .table th, .table td {
-    border-color: #666 !important;
-    border-width: 1px !important;
+    border: 1px solid #666 !important;
+  }
+
+  .table {
+    width: 100% !important;
+    border-collapse: collapse !important; /* Assure que les bordures des cellules sont bien jointes */
   }
 
   .table thead {
@@ -90,8 +97,25 @@
   .page-break-before {
     page-break-before: always;
   }
-  
+
   .page-break-after {
     page-break-after: always;
+  }
+
+  /* --- OPTIMISER LES IMAGES --- */
+  img {
+    max-width: 100% !important; /* Assure que les images ne dépassent pas la largeur de la page */
+    height: auto !important; /* Conserve les proportions */
+  }
+
+  /* --- OPTIMISER LES LISTES --- */
+  ul, ol {
+    page-break-inside: avoid; /* Évite de couper les listes sur plusieurs pages */
+  }
+
+  /* --- OPTIMISER LES BLOCS DE CODE --- */
+  pre, code {
+    white-space: pre-wrap; /* Permet le retour à la ligne dans les blocs de code */
+    word-break: break-all; /* Casse les mots longs si nécessaire */
   }
 }

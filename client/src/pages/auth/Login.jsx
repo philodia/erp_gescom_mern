@@ -1,11 +1,10 @@
-// --- Imports ---
-import React, { useState } from 'react'; // Importer useState pour gérer l'erreur de soumission
-import { useNavigate, Link } from 'react-router-dom';
+import React from 'react';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 
 // --- Hooks et Contextes ---
-import { useAuth } from '../../context/AuthContext'; // CORRECTION: Importer depuis le contexte
-import useForm from '../../hooks/useForm'; // Votre excellent hook de formulaire
-import { loginValidationSchema } from '../../utils/validators'; // Schéma de validation
+import { useAuth } from '../../hooks/useAuth';
+import useForm, { FORM_ACTIONS } from '../../hooks/useForm'; // Importer les actions du formulaire
+import { loginValidationSchema } from '../../utils/validators';
 
 // --- Composants UI ---
 import { Container, Form } from 'react-bootstrap';
@@ -17,24 +16,26 @@ import Alert from '../../components/ui/Alert';
 const Login = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
-  
-  // État local pour gérer UNIQUEMENT les erreurs venant de l'API après soumission
-  const [submissionError, setSubmissionError] = useState(null);
+  const location = useLocation();
 
-  // --- Fonction de soumission ---
-  // Elle est maintenant définie à l'intérieur du composant pour pouvoir utiliser `setSubmissionError`.
-  const handleLogin = async (credentials) => {
+  const from = location.state?.from?.pathname || '/dashboard';
+
+  /**
+   * Fonction de callback pour la soumission du formulaire.
+   * Elle reçoit les données et la fonction `dispatch` du hook useForm.
+   */
+  const handleLogin = async (credentials, { dispatch }) => {
     try {
-      // Réinitialiser l'erreur de soumission à chaque nouvelle tentative
-      setSubmissionError(null);
-      
-      // La validation a déjà été faite par le hook.
-      await login(credentials); // Le contexte login attend probablement un seul objet
-      navigate('/dashboard');
+      await login(credentials.email, credentials.password);
+      navigate(from, { replace: true });
     } catch (err) {
-      // Capturer l'erreur de l'API (ex: 401 Unauthorized) et la mettre dans notre état local
       const errorMessage = err.response?.data?.message || 'Email ou mot de passe incorrect.';
-      setSubmissionError(errorMessage);
+      // Au lieu d'un état local, on dispatche une action d'échec
+      // que le reducer de notre hook useForm va gérer.
+      dispatch({
+          type: FORM_ACTIONS.SUBMIT_FAILURE,
+          payload: { error: errorMessage }
+      });
     }
   };
 
@@ -46,46 +47,47 @@ const Login = () => {
     handleChange,
     handleSubmit,
   } = useForm(
-    { email: '', password: '' }, // Valeurs initiales
-    loginValidationSchema,      // Schéma de validation
-    handleLogin                 // Callback de soumission
+    { email: '', password: '' },
+    loginValidationSchema,
+    handleLogin
   );
   
   // --- Rendu JSX ---
   return (
     <Container 
       className="d-flex align-items-center justify-content-center"
-      style={{ minHeight: '100vh', backgroundColor: 'var(--bs-light)' }} // Utiliser une variable Bootstrap
+      style={{ minHeight: '100vh', backgroundColor: 'var(--bg-primary)' }}
     >
       <div className="w-100" style={{ maxWidth: '400px' }}>
         <Card title="Connexion">
-          {/* L'alerte affiche l'erreur de soumission de l'API */}
-          {submissionError && <Alert variant="danger">{submissionError}</Alert>}
+          {/* L'erreur de soumission est maintenant lue depuis errors.submit */}
+          {errors.submit && <Alert variant="danger">{errors.submit}</Alert>}
           
           <Form noValidate onSubmit={handleSubmit}>
             <Input
-              id="email"
               label="Adresse Email"
               name="email"
               type="email"
+              autoComplete="email"
               value={formData.email}
               onChange={handleChange}
-              error={errors.email} // Affiche les erreurs de validation du champ
+              error={errors.email}
               placeholder="exemple@email.com"
+              disabled={isSubmitting}
             />
             <Input
-              id="password"
               label="Mot de passe"
               name="password"
               type="password"
+              autoComplete="current-password"
               value={formData.password}
               onChange={handleChange}
-              error={errors.password} // Affiche les erreurs de validation du champ
+              error={errors.password}
               placeholder="Votre mot de passe"
+              disabled={isSubmitting}
             />
-            {/* CORRECTION: La prop s'appelle `loading` dans notre composant Button */}
-            <Button type="submit" loading={isSubmitting} className="w-100 mt-3">
-              {isSubmitting ? 'Connexion...' : 'Se connecter'}
+            <Button type="submit" isLoading={isSubmitting} className="w-100 mt-3">
+              Se connecter
             </Button>
           </Form>
 

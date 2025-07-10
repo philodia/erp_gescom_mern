@@ -8,7 +8,6 @@ const { register, login } = require('../controllers/authController');
 const { userValidationRules, loginValidationRules, validate } = require('../middleware/validation');
 const { authLimiter, createLimiter } = require('../middleware/rateLimiter');
 
-
 // 3. Définir les routes avec leurs chaînes de middlewares
 
 /**
@@ -24,7 +23,6 @@ const { authLimiter, createLimiter } = require('../middleware/rateLimiter');
  */
 router.post('/register', createLimiter, userValidationRules(), validate, register);
 
-
 /**
  * @desc    Authentifier un utilisateur et renvoyer un token
  * @route   POST /api/auth/login
@@ -38,12 +36,10 @@ router.post('/register', createLimiter, userValidationRules(), validate, registe
  */
 router.post('/login', authLimiter, loginValidationRules(), validate, login);
 
-
 // Note : Pour les futures routes, on suivrait le même modèle.
 // Par exemple, pour un mot de passe oublié :
 // const { forgotPasswordLimiter } = require('../middleware/rateLimiter');
 // router.post('/forgotpassword', forgotPasswordLimiter, forgotPassword);
-
 
 // 4. Exporter le routeur
 module.exports = router;

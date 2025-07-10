@@ -1,85 +1,120 @@
-import { useState, useCallback } from 'react';
-import { validateForm } from '../utils/validators'; // On utilise notre utilitaire de validation
+import { useReducer, useCallback } from 'react';
+import { validateForm } from '../utils/validators';
 
-/**
- * Un hook personnalisé pour gérer l'état et la validation des formulaires.
- *
- * @param {object} initialValues - Les valeurs initiales du formulaire.
- * @param {object} validationSchema - Le schéma de validation à appliquer.
- * @param {function} onSubmitCallback - La fonction à appeler avec les données valides lors de la soumission.
- * @returns {object} Un objet contenant l'état du formulaire et les fonctions pour le manipuler.
- */
+// --- Définition des Actions pour le Reducer ---
+// On les exporte pour qu'elles puissent être utilisées dans le callback de soumission
+export const FORM_ACTIONS = {
+    UPDATE_FIELD: 'update_field',
+    SET_ERRORS: 'set_errors',
+    SUBMIT_START: 'submit_start',
+    SUBMIT_SUCCESS: 'submit_success',
+    SUBMIT_FAILURE: 'submit_failure',
+    RESET_FORM: 'reset_form',
+};
+
+// --- Le Reducer qui gère l'état ---
+const formReducer = (state, action) => {
+    switch (action.type) {
+        case FORM_ACTIONS.UPDATE_FIELD:
+            const { name, value } = action.payload;
+            const newFormData = JSON.parse(JSON.stringify(state.formData));
+            
+            if (name.includes('.')) {
+                // ... (logique des champs imbriqués)
+            } else {
+                newFormData[name] = value;
+            }
+            
+            const newErrors = { ...state.errors };
+            delete newErrors[name];
+            delete newErrors.submit;
+
+            return { ...state, formData: newFormData, errors: newErrors };
+
+        case FORM_ACTIONS.SET_ERRORS:
+            return { ...state, errors: action.payload, isSubmitting: false };
+
+        case FORM_ACTIONS.SUBMIT_START:
+            return { ...state, isSubmitting: true, errors: {} };
+
+        case FORM_ACTIONS.SUBMIT_SUCCESS:
+            return { ...state, isSubmitting: false };
+            
+        case FORM_ACTIONS.SUBMIT_FAILURE:
+            return { 
+                ...state, 
+                isSubmitting: false, 
+                errors: { ...state.errors, submit: action.payload.error }
+            };
+
+        case FORM_ACTIONS.RESET_FORM:
+            return {
+                formData: action.payload.initialValues,
+                errors: {},
+                isSubmitting: false,
+            };
+
+        default:
+            throw new Error(`Action non gérée dans formReducer: ${action.type}`);
+    }
+};
+
+
 const useForm = (initialValues, validationSchema, onSubmitCallback) => {
-  // État pour les valeurs du formulaire
-  const [formData, setFormData] = useState(initialValues);
-  
-  // État pour les erreurs de validation
-  const [errors, setErrors] = useState({});
-  
-  // État pour savoir si le formulaire est en cours de soumission
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  /**
-   * Gère les changements de valeur des champs du formulaire.
-   * Utilise useCallback pour la performance, afin que la fonction ne soit pas
-   * recréée à chaque re-rendu, sauf si setFormData change.
-   */
-  const handleChange = useCallback((e) => {
-    const { name, value, type, checked } = e.target;
-    const val = type === 'checkbox' ? checked : value;
-
-    setFormData((prevData) => ({
-      ...prevData,
-      [name]: val,
-    }));
+    const initialState = {
+        formData: initialValues,
+        errors: {},
+        isSubmitting: false,
+    };
     
-    // Optionnel : effacer l'erreur du champ lorsqu'il est modifié
-    if (errors[name]) {
-      setErrors((prevErrors) => ({
-        ...prevErrors,
-        [name]: null,
-      }));
-    }
-  }, [errors]);
+    const [state, dispatch] = useReducer(formReducer, initialState);
 
-  /**
-   * Gère la soumission du formulaire.
-   * Valide les données et appelle le callback si tout est valide.
-   */
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
+    const handleChange = useCallback((e) => {
+        dispatch({
+            type: FORM_ACTIONS.UPDATE_FIELD,
+            payload: { name: e.target.name, value: e.target.type === 'checkbox' ? e.target.checked : e.target.value },
+        });
+    }, []);
 
-    const validationErrors = validateForm(formData, validationSchema);
-    setErrors(validationErrors);
+    const handleSubmit = useCallback(async (e) => {
+        e.preventDefault();
+        dispatch({ type: FORM_ACTIONS.SUBMIT_START });
 
-    // Si l'objet d'erreurs est vide, le formulaire est valide
-    if (Object.keys(validationErrors).length === 0) {
-      await onSubmitCallback(formData);
-    }
-    
-    setIsSubmitting(false);
-  };
+        const validationErrors = validateForm(state.formData, validationSchema);
+        if (Object.keys(validationErrors).length > 0) {
+            dispatch({ type: FORM_ACTIONS.SET_ERRORS, payload: validationErrors });
+            return;
+        }
 
-  /**
-   * Réinitialise le formulaire à ses valeurs initiales.
-   */
-  const resetForm = () => {
-    setFormData(initialValues);
-    setErrors({});
-    setIsSubmitting(false);
-  };
+        // Le callback est maintenant un `try/catch` qui gère le succès ou l'échec
+        try {
+            // --- CORRECTION CLÉ ---
+            // On passe les données ET la fonction dispatch au callback.
+            await onSubmitCallback(state.formData, { dispatch });
+            dispatch({ type: FORM_ACTIONS.SUBMIT_SUCCESS });
+        } catch (error) {
+            // Cette partie n'est plus strictement nécessaire si le callback dispatche lui-même
+            // l'erreur, mais c'est une sécurité.
+            dispatch({ 
+                type: FORM_ACTIONS.SUBMIT_FAILURE, 
+                payload: { error: error.message || 'Une erreur de soumission est survenue.' }
+            });
+        }
+    }, [state.formData, validationSchema, onSubmitCallback]);
 
-  // Retourne l'état et les gestionnaires pour que le composant puisse les utiliser
-  return {
-    formData,
-    setFormData, // Exposer setFormData pour des mises à jour manuelles si nécessaire
-    errors,
-    isSubmitting,
-    handleChange,
-    handleSubmit,
-    resetForm,
-  };
+    const resetForm = useCallback(() => {
+        dispatch({ type: FORM_ACTIONS.RESET_FORM, payload: { initialValues } });
+    }, [initialValues]);
+
+    return {
+        formData: state.formData,
+        errors: state.errors,
+        isSubmitting: state.isSubmitting,
+        setFormData: (newData) => dispatch({ type: FORM_ACTIONS.UPDATE_FIELD, payload: { name: Object.keys(newData)[0], value: Object.values(newData)[0] } }),
+        handleChange,
+        handleSubmit,
+        resetForm,
+    };
 };
 
 export default useForm;

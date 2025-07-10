@@ -1,11 +1,8 @@
 const { body, param, validationResult } = require('express-validator');
-const { ROLES } = require('../utils/constants');
+const { ROLES, TIERS_TYPES, CURRENCIES } = require('../utils/constants'); // Importer plus de constantes
 
 /**
- * Middleware qui agrège les résultats de la validation.
- * S'exécute après les règles de validation dans la chaîne de middlewares.
- * S'il y a des erreurs, il les formate et renvoie une réponse 422.
- * Sinon, il passe au prochain middleware.
+ * Middleware qui agrège les résultats de la validation et renvoie les erreurs.
  */
 exports.validate = (req, res, next) => {
   const errors = validationResult(req);
@@ -13,7 +10,6 @@ exports.validate = (req, res, next) => {
     return next();
   }
   
-  // Formate les erreurs pour être plus lisibles côté client.
   const extractedErrors = [];
   errors.array().map(err => extractedErrors.push({ [err.param]: err.msg }));
 
@@ -23,9 +19,9 @@ exports.validate = (req, res, next) => {
   });
 };
 
+
 // --- RÈGLES DE VALIDATION PAR RESSOURCE ---
 
-// Validation pour l'inscription d'un utilisateur
 exports.userValidationRules = () => {
   return [
     body('nom').trim().not().isEmpty().withMessage('Le nom est obligatoire.'),
@@ -35,7 +31,6 @@ exports.userValidationRules = () => {
   ];
 };
 
-// Validation pour la connexion
 exports.loginValidationRules = () => {
     return [
         body('email').isEmail().withMessage('Veuillez fournir un email valide.').normalizeEmail(),
@@ -43,17 +38,16 @@ exports.loginValidationRules = () => {
     ];
 };
 
-// Validation pour un client
 exports.clientValidationRules = () => {
     return [
         body('nom').trim().not().isEmpty().withMessage('Le nom du client est obligatoire.'),
         body('email').optional({ checkFalsy: true }).isEmail().withMessage('L\'email fourni est invalide.').normalizeEmail(),
         body('telephone').optional({ checkFalsy: true }).isMobilePhone('any', { strictMode: false }).withMessage('Le numéro de téléphone est invalide.'),
-        body('type').isIn(['Prospect', 'Client']).withMessage('Le type doit être "Prospect" ou "Client".')
+        // Utiliser les constantes pour la validation
+        body('type').isIn([TIERS_TYPES.PROSPECT, TIERS_TYPES.CLIENT]).withMessage(`Le type doit être "${TIERS_TYPES.PROSPECT}" ou "${TIERS_TYPES.CLIENT}".`)
     ];
 };
 
-// Validation pour une facture
 exports.factureValidationRules = () => {
     return [
         body('client').isMongoId().withMessage('L\'ID du client est invalide.'),
@@ -65,9 +59,38 @@ exports.factureValidationRules = () => {
     ];
 };
 
-// Validation générique pour un ID MongoDB dans les paramètres d'URL
+// --- RÈGLE AJOUTÉE ---
+/**
+ * Validation pour les paramètres de l'entreprise.
+ */
+exports.parametresValidationRules = () => {
+    return [
+        body('nomEntreprise')
+            .not().isEmpty({ ignore_whitespace: true }).withMessage("Le nom de l'entreprise est obligatoire.")
+            .trim(),
+        
+        body('email')
+            .optional({ checkFalsy: true })
+            .isEmail().withMessage("L'email fourni est invalide.")
+            .normalizeEmail(),
+        
+        body('siteWeb')
+            .optional({ checkFalsy: true })
+            .isURL().withMessage("L'URL du site web est invalide.")
+            .trim(),
+        
+        body('devisePrincipale')
+            .optional()
+            .isIn(Object.values(CURRENCIES)).withMessage('La devise fournie n\'est pas supportée.')
+    ];
+};
+
+
 exports.idParamValidationRules = () => {
     return [
         param('id').isMongoId().withMessage('L\'ID fourni dans l\'URL est invalide.')
     ];
 };
+
+// Exporter toutes les règles
+module.exports.parametresValidationRules = exports.parametresValidationRules;

@@ -16,10 +16,12 @@ const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/utilisateurs');
 const clientRoutes = require('./routes/clients');
 const parametresRoutes = require('./routes/parametres');
+const dashboardRoutes = require('./routes/dashboard');
 // Ajoutez ici les futures routes (fournisseurs, produits, etc.)
 
 // --- Initialisation de l'application Express ---
 const app = express();
+app.set('trust proxy', 1);
 
 // --- Application des Middlewares Globaux (l'ordre est important) ---
 
@@ -56,6 +58,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/utilisateurs', userRoutes);
 app.use('/api/clients', clientRoutes);
 app.use('/api/parametres', parametresRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 // app.use('/api/fournisseurs', fournisseurRoutes);
 
 

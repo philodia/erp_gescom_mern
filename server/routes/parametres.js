@@ -2,51 +2,46 @@ const express = require('express');
 const router = express.Router();
 const { ROLES } = require('../utils/constants');
 
-// 1. Importer les fonctions du contrôleur
+// --- Importer les contrôleurs ---
 const {
   getParametres,
   updateParametres,
-  updateLogo, // <-- Importer le nouveau contrôleur
+  updateLogo,
 } = require('../controllers/parametresController');
 
-// 2. Importer les middlewares
+// --- Importer les middlewares ---
 const { protect, authorize } = require('../middleware/auth');
-const { uploadLogo, handleUploadErrors } = require('../middleware/upload'); // <-- Importer les middlewares d'upload
+const { uploadLogo, handleUploadErrors } = require('../middleware/upload');
+// On peut ajouter une règle de validation pour les paramètres
+const { parametresValidationRules, validate } = require('../middleware/validation');
 
-// --- Application globale du middleware 'protect' ---
-// Toutes les routes de ce fichier nécessiteront une authentification.
+// --- Appliquer le middleware 'protect' à toutes les routes de ce module ---
 router.use(protect);
 
 
-// 3. Définir la route principale pour les données textuelles
+// --- Route principale pour les données de l'entreprise ---
 router.route('/')
   /**
    * @route   GET /api/parametres
    * @desc    Récupérer les paramètres de l'entreprise.
-   * @access  Private (tous les utilisateurs connectés)
+   * @access  Private
    */
   .get(getParametres)
 
   /**
    * @route   PUT /api/parametres
-   * @desc    Mettre à jour les paramètres textuels de l'entreprise.
+   * @desc    Mettre à jour les paramètres textuels.
    * @access  Private/Admin
    */
-  .put(authorize(ROLES.ADMIN), updateParametres);
+  .put(
+    authorize(ROLES.ADMIN),
+    parametresValidationRules(), // <-- AJOUT: Valider les données entrantes
+    validate,
+    updateParametres
+  );
 
 
-// 4. Définir une route spécifique pour l'upload du logo
-/**
- * @route   PUT /api/parametres/logo
- * @desc    Mettre à jour le logo de l'entreprise.
- * @access  Private/Admin
- *
- * Chaîne de middlewares:
- * 1. authorize: Vérifie que l'utilisateur est un Admin.
- * 2. uploadLogo: Le middleware Multer qui traite le fichier uploadé.
- * 3. handleUploadErrors: Attrape les erreurs spécifiques à l'upload (taille, type).
- * 4. updateLogo: Le contrôleur qui traite les informations du fichier.
- */
+// --- Route spécifique pour l'upload du logo ---
 router.put(
   '/logo',
   authorize(ROLES.ADMIN),
@@ -56,5 +51,4 @@ router.put(
 );
 
 
-// 5. Exporter le routeur
 module.exports = router;
