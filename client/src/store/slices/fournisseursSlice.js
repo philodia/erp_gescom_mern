@@ -1,48 +1,60 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import api from '../../services/api'; // On réutilise la même instance Axios
+import api from '../../services/api';
 
 // --- THUNKS ASYNCHRONES POUR LES FOURNISSEURS ---
 
-// Thunk pour RÉCUPÉRER tous les fournisseurs
+/**
+ * Thunk pour RÉCUPÉRER une page de fournisseurs.
+ * @param {object} [args] - Arguments { page, limit, search }.
+ */
 export const fetchFournisseurs = createAsyncThunk(
   'fournisseurs/fetchFournisseurs',
-  async (_, { rejectWithValue }) => {
+  async (args = {}, { rejectWithValue }) => {
     try {
-      const response = await api.get('/fournisseurs'); // Endpoint de l'API pour les fournisseurs
-      return response.data;
+      // Notre api.get retourne maintenant directement les données.
+      const data = await api.get('/fournisseurs', { params: args });
+      // L'API retourne un objet { fournisseurs: [...], pagination: {...} }
+      return data;
     } catch (err) {
-      return rejectWithValue(err.response.data);
+      return rejectWithValue(err.response?.data?.message || 'Erreur de chargement des fournisseurs.');
     }
   }
 );
 
-// Thunk pour CRÉER un nouveau fournisseur
+/**
+ * Thunk pour CRÉER un nouveau fournisseur.
+ */
 export const addNewFournisseur = createAsyncThunk(
   'fournisseurs/addNewFournisseur',
   async (fournisseurData, { rejectWithValue }) => {
     try {
-      const response = await api.post('/fournisseurs', fournisseurData);
-      return response.data.data;
+      const { data } = await api.post('/fournisseurs', fournisseurData);
+      return data;
     } catch (err) {
-      return rejectWithValue(err.response.data);
+      return rejectWithValue(err.response?.data);
     }
   }
 );
 
-// Thunk pour METTRE À JOUR un fournisseur
+/**
+ * Thunk pour METTRE À JOUR un fournisseur.
+ */
 export const updateFournisseur = createAsyncThunk(
   'fournisseurs/updateFournisseur',
-  async ({ id, ...fournisseurData }, { rejectWithValue }) => {
+  async (fournisseurData, { rejectWithValue }) => {
+    const { _id, ...updateData } = fournisseurData;
     try {
-      const response = await api.put(`/fournisseurs/${id}`, fournisseurData);
-      return response.data.data;
+      const { data } = await api.put(`/fournisseurs/${_id}`, updateData);
+      return data;
     } catch (err) {
-      return rejectWithValue(err.response.data);
+      return rejectWithValue(err.response?.data);
     }
   }
 );
 
-// Thunk pour SUPPRIMER (désactiver) un fournisseur
+/**
+ * Thunk pour SUPPRIMER (désactiver) un fournisseur.
+ */
 export const deleteFournisseur = createAsyncThunk(
   'fournisseurs/deleteFournisseur',
   async (fournisseurId, { rejectWithValue }) => {
@@ -50,7 +62,7 @@ export const deleteFournisseur = createAsyncThunk(
       await api.delete(`/fournisseurs/${fournisseurId}`);
       return fournisseurId;
     } catch (err) {
-      return rejectWithValue(err.response.data);
+      return rejectWithValue(err.response?.data);
     }
   }
 );
@@ -59,45 +71,51 @@ export const deleteFournisseur = createAsyncThunk(
 // --- DÉFINITION DU SLICE FOURNISSEURS ---
 const fournisseursSlice = createSlice({
   name: 'fournisseurs',
+  // --- État initial mis à jour pour inclure la pagination ---
   initialState: {
     items: [],
+    pagination: {
+      total: 0,
+      limit: 10,
+      currentPage: 1,
+      totalPages: 1,
+    },
     status: 'idle', // 'idle' | 'loading' | 'succeeded' | 'failed'
     error: null,
   },
   reducers: {},
   extraReducers(builder) {
     builder
-      // Cas pour fetchFournisseurs
+      // --- Cas pour fetchFournisseurs mis à jour ---
       .addCase(fetchFournisseurs.pending, (state) => {
         state.status = 'loading';
       })
       .addCase(fetchFournisseurs.fulfilled, (state, action) => {
         state.status = 'succeeded';
-        state.items = action.payload;
+        state.items = action.payload.fournisseurs; // Mettre à jour la liste
+        state.pagination = action.payload.pagination; // Mettre à jour la pagination
       })
       .addCase(fetchFournisseurs.rejected, (state, action) => {
         state.status = 'failed';
-        state.error = action.payload.message || 'Erreur inconnue';
+        state.error = action.payload || 'Erreur inconnue';
       })
 
-      // Cas pour addNewFournisseur
+      // --- Cas pour les autres thunks (similaires à clientsSlice) ---
       .addCase(addNewFournisseur.fulfilled, (state, action) => {
         state.items.unshift(action.payload);
+        state.pagination.total += 1;
       })
-      
-      // Cas pour updateFournisseur
       .addCase(updateFournisseur.fulfilled, (state, action) => {
-        const updatedFournisseur = action.payload;
-        const existingIndex = state.items.findIndex(item => item._id === updatedFournisseur._id);
-        if (existingIndex !== -1) {
-          state.items[existingIndex] = updatedFournisseur;
+        const updated = action.payload;
+        const index = state.items.findIndex(item => item._id === updated._id);
+        if (index !== -1) {
+          state.items[index] = updated;
         }
       })
-      
-      // Cas pour deleteFournisseur
       .addCase(deleteFournisseur.fulfilled, (state, action) => {
-        const fournisseurId = action.payload;
-        state.items = state.items.filter(item => item._id !== fournisseurId);
+        const id = action.payload;
+        state.items = state.items.filter(item => item._id !== id);
+        state.pagination.total -= 1;
       });
   }
 });

@@ -86,11 +86,38 @@ exports.parametresValidationRules = () => {
 };
 
 
+/* Validation pour la création/mise à jour d'un fournisseur.
+ */
+exports.fournisseurValidationRules = () => {
+    return [
+        body('nom')
+            .trim()
+            .not().isEmpty().withMessage('Le nom du fournisseur est obligatoire.'),
+        
+        body('email')
+            .optional({ checkFalsy: true }) // Le champ est optionnel
+            .isEmail().withMessage('L\'email principal est invalide.')
+            .normalizeEmail(),
+        
+        // Valider l'email du contact principal, qui est un champ imbriqué
+        body('contactPrincipal.email')
+            .optional({ checkFalsy: true })
+            .isEmail().withMessage('L\'email du contact principal est invalide.')
+            .normalizeEmail(),
+
+        body('evaluation')
+            .optional({ checkFalsy: true })
+            .isInt({ min: 1, max: 5 }).withMessage("L'évaluation doit être un nombre entier entre 1 et 5."),
+    ];
+};
+
+
 exports.idParamValidationRules = () => {
     return [
         param('id').isMongoId().withMessage('L\'ID fourni dans l\'URL est invalide.')
     ];
 };
+
 
 // Exporter toutes les règles
 module.exports.parametresValidationRules = exports.parametresValidationRules;

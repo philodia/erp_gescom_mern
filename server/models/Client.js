@@ -1,19 +1,22 @@
 const mongoose = require('mongoose');
+const { TIERS_TYPES } = require('../utils/constants'); // Importer nos constantes
 
-// Définition du schéma pour le modèle Client.
 const clientSchema = new mongoose.Schema({
   nom: {
     type: String,
     required: [true, 'Le nom du client est obligatoire.'],
     trim: true,
+    index: true, // Raccourci pour créer un index sur ce champ
   },
   
-  // Distingue un simple contact d'un client facturable.
-  // Utile pour la segmentation et le pipeline commercial.
   type: {
     type: String,
-    enum: ['Prospect', 'Client'],
-    default: 'Client',
+    // Utiliser les constantes pour l'enum pour une meilleure maintenabilité
+    enum: {
+      values: [TIERS_TYPES.CLIENT, TIERS_TYPES.PROSPECT],
+      message: "Le type '{VALUE}' n'est pas supporté."
+    },
+    default: TIERS_TYPES.CLIENT,
     required: true,
   },
   
@@ -21,9 +24,8 @@ const clientSchema = new mongoose.Schema({
     type: String,
     trim: true,
     lowercase: true,
-    // Note : On ne met pas 'unique: true' ici car plusieurs contacts
-    // d'une même entreprise pourraient partager un email générique (ex: contact@entreprise.com),
-    // ou le champ peut être vide.
+    // Ajouter une validation de format, même si le champ n'est pas requis
+    match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, "Veuillez fournir une adresse email valide."],
   },
 
   telephone: {
@@ -31,7 +33,6 @@ const clientSchema = new mongoose.Schema({
     trim: true,
   },
   
-  // Structure d'adresse imbriquée pour une meilleure organisation.
   adresse: {
     rue: { type: String, trim: true },
     ville: { type: String, trim: true },
@@ -39,50 +40,39 @@ const clientSchema = new mongoose.Schema({
     pays: { type: String, default: 'Sénégal', trim: true },
   },
 
-  // Numéro d'Identification National des Entreprises et des Associations (Sénégal)
   numeroTVA: {
     type: String,
     trim: true,
-    // Ce champ est souvent appelé NINEA ou RCCM.
   },
   
-  // Représente le solde comptable du client.
-  // Sera mis à jour par les factures et les paiements.
   solde: {
     type: Number,
     default: 0,
     required: true,
   },
   
-  // Permet de désactiver un client sans le supprimer (soft delete).
-  // Un client inactif n'apparaîtra plus dans les listes de sélection par défaut.
   isActive: {
     type: Boolean,
     default: true,
+    index: true, // Index sur ce champ pour filtrer rapidement les actifs/inactifs
   },
   
-  // Champ de traçabilité : qui a créé ce client ?
-  // C'est une référence à un document dans la collection 'User'.
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true,
+    index: true, // Utile si on veut filtrer les clients par créateur
   },
 
-  // Vous pourriez ajouter d'autres champs ici à l'avenir :
-  // notes: String,
-  // secteurActivite: String,
-  // contactPrincipal: { nom: String, email: String, telephone: String },
-
 }, {
-  // Ajoute automatiquement les champs `createdAt` et `updatedAt`.
   timestamps: true,
 });
 
-// Création d'un index sur le nom pour accélérer les recherches et les tris par nom.
-clientSchema.index({ nom: 1 });
-// Index sur le statut d'activité pour filtrer rapidement les clients actifs.
-clientSchema.index({ isActive: 1 });
+// La syntaxe `index: true` dans les champs remplace les appels .index() manuels,
+// ce qui est plus concis.
+
+// Ajouter un index composé pour les recherches/tris fréquents
+clientSchema.index({ nom: 'text', email: 'text' }); // Permet une recherche textuelle plus efficace
 
 const Client = mongoose.model('Client', clientSchema);
 

@@ -1,22 +1,33 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 
-// Importer les layouts et les composants de route
+// --- Importer les composants de structure de route ---
 import Layout from './components/common/Layout';
 import PrivateRoute from './components/common/PrivateRoute';
+import PublicRoute from './components/common/PublicRoute'; // Importer la route publique
 
-// Importer les pages
-import Dashboard from './pages/Dashboard';
+// --- Importer toutes les pages ---
+
+// Pages d'authentification
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
-import ClientsList from './pages/clients/ClientsList';
-import Entreprise from './pages/parametres/Entreprise';
+// import ForgotPassword from './pages/auth/ForgotPassword';
+
+// Pages principales
+import Dashboard from './pages/Dashboard';
 import NotFound from './pages/NotFound';
 
-// Ajouter ici les imports des futures pages au fur et à mesure
-// import FournisseursList from './pages/fournisseurs/FournisseursList';
-// import ProduitsList from './pages/produits/ProduitsList';
-// import VentesList from './pages/ventes/VentesList';
+// Pages Clients
+import ClientsList from './pages/clients/ClientsList';
+import ClientAdd from './pages/clients/ClientAdd';
+import ClientDetail from './pages/clients/ClientDetail';
+import ClientEdit from './pages/clients/ClientEdit'; // On va créer ce composant
+
+// Pages Paramètres
+import Entreprise from './pages/parametres/Entreprise';
+
+// (Ajouter les futurs imports ici)
+
 
 /**
  * Le composant central qui définit toutes les routes de l'application.
@@ -25,44 +36,45 @@ const AppRoutes = () => {
   return (
     <Routes>
       {/* --- ROUTES PUBLIQUES --- */}
-      {/* Routes accessibles sans authentification */}
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
-      {/* <Route path="/forgot-password" element={<ForgotPassword />} /> */}
+      {/* Enveloppées dans PublicRoute pour rediriger les utilisateurs déjà connectés */}
+      <Route element={<PublicRoute />}>
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        {/* <Route path="/forgot-password" element={<ForgotPassword />} /> */}
+      </Route>
 
 
       {/* --- ROUTES PRIVÉES / PROTÉGÉES --- */}
-      {/* Toutes les routes imbriquées ici nécessiteront une authentification */}
       <Route element={<PrivateRoute />}>
-        {/* Toutes les routes ici utiliseront le Layout principal (Header, Sidebar) */}
         <Route element={<Layout />}>
+          {/* Dashboard (page d'accueil par défaut pour les utilisateurs connectés) */}
           <Route path="/dashboard" element={<Dashboard />} />
           
-          {/* Clients */}
+          {/* Module Clients */}
           <Route path="/clients" element={<ClientsList />} />
-          {/* <Route path="/clients/ajouter" element={<ClientForm />} /> */}
-          {/* <Route path="/clients/modifier/:id" element={<ClientForm />} /> */}
+          <Route path="/clients/ajouter" element={<ClientAdd />} />
+          <Route path="/clients/:id" element={<ClientDetail />} />
+          <Route path="/clients/modifier/:id" element={<ClientEdit />} />
           
-          {/* Fournisseurs */}
+          {/* Module Fournisseurs (à venir) */}
           {/* <Route path="/fournisseurs" element={<FournisseursList />} /> */}
           
-          {/* Produits */}
+          {/* Module Produits (à venir) */}
           {/* <Route path="/produits" element={<ProduitsList />} /> */}
 
-          {/* Ventes */}
+          {/* Module Ventes (à venir) */}
           {/* <Route path="/ventes" element={<VentesList />} /> */}
           
-          {/* Paramètres */}
+          {/* Module Paramètres */}
           <Route path="/parametres/entreprise" element={<Entreprise />} />
           
-          {/* Redirection par défaut après connexion */}
+          {/* Redirection par défaut pour la racine de l'application */}
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
         </Route>
       </Route>
 
 
-      {/* --- ROUTE 404 --- */}
-      {/* S'affiche si aucune des routes ci-dessus ne correspond */}
+      {/* --- ROUTE 404 (Catch-all) --- */}
       <Route path="*" element={<NotFound />} />
       
     </Routes>

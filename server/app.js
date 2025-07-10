@@ -15,6 +15,7 @@ const { notFound, errorHandler } = require('./middleware/errorHandler');
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/utilisateurs');
 const clientRoutes = require('./routes/clients');
+const fournisseurRoutes = require('./routes/fournisseurs');
 const parametresRoutes = require('./routes/parametres');
 const dashboardRoutes = require('./routes/dashboard');
 // Ajoutez ici les futures routes (fournisseurs, produits, etc.)
@@ -57,6 +58,7 @@ app.get('/api/health', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/utilisateurs', userRoutes);
 app.use('/api/clients', clientRoutes);
+app.use('/api/fournisseurs', fournisseurRoutes);
 app.use('/api/parametres', parametresRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 // app.use('/api/fournisseurs', fournisseurRoutes);

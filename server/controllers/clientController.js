@@ -1,122 +1,111 @@
+const asyncHandler = require('express-async-handler');
 const Client = require('../models/Client');
+const { successResponse } = require('../utils/helpers');
+const { PAGINATION } = require('../utils/constants');
 
 /**
  * @desc    Créer un nouveau client
  * @route   POST /api/clients
  * @access  Private (Admin, Commercial)
  */
-exports.createClient = async (req, res) => {
-  try {
-    // On prend toutes les données du corps de la requête...
-    const clientData = { ...req.body };
-    // ...et on y ajoute l'ID de l'utilisateur qui effectue l'action.
-    // req.user est fourni par notre middleware 'protect'.
-    clientData.createdBy = req.user.id;
+exports.createClient = asyncHandler(async (req, res) => {
+  const clientData = { ...req.body, createdBy: req.user.id };
+  const client = await Client.create(clientData);
+  successResponse(res, 201, 'Client créé avec succès.', client);
+});
 
-    const newClient = new Client(clientData);
-    const savedClient = await newClient.save();
-    
-    res.status(201).json({
-      message: "Client créé avec succès.",
-      data: savedClient
-    });
-  } catch (error) {
-    // Si une erreur de validation Mongoose se produit, on renvoie une erreur 400.
-    console.error("Erreur lors de la création du client :", error);
-    res.status(400).json({ message: 'Erreur lors de la création du client.', error: error.message });
-  }
-};
 
 /**
- * @desc    Récupérer tous les clients (avec pagination et recherche)
+ * @desc    Récupérer tous les clients avec recherche et pagination
  * @route   GET /api/clients
- * @access  Private (tous les utilisateurs connectés)
+ * @access  Private
  */
-exports.getAllClients = async (req, res) => {
-  try {
-    // Pour l'instant, une récupération simple. Nous ajouterons la pagination/recherche plus tard.
-    // On récupère uniquement les clients actifs et on les trie par date de création (du plus récent au plus ancien).
-    const clients = await Client.find({ isActive: true }).sort({ createdAt: -1 });
-    
-    res.status(200).json(clients);
-  } catch (error) {
-    console.error("Erreur lors de la récupération des clients :", error);
-    res.status(500).json({ message: 'Erreur du serveur lors de la récupération des clients.', error: error.message });
+exports.getAllClients = asyncHandler(async (req, res) => {
+  const page = parseInt(req.query.page, 10) || PAGINATION.DEFAULT_PAGE;
+  const limit = parseInt(req.query.limit, 10) || PAGINATION.DEFAULT_PAGE_SIZE;
+  const searchTerm = req.query.search || '';
+  
+  // Construire la requête de filtre
+  const query = { isActive: true };
+  if (searchTerm) {
+    // Utiliser l'index textuel pour une recherche performante
+    query.$text = { $search: searchTerm };
   }
-};
+
+  const skip = (page - 1) * limit;
+
+  // Exécuter les requêtes en parallèle pour la performance
+  const [clients, total] = await Promise.all([
+    Client.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit).lean(),
+    Client.countDocuments(query)
+  ]);
+  
+  const totalPages = Math.ceil(total / limit);
+  const pagination = {
+    total,
+    limit,
+    currentPage: page,
+    totalPages,
+  };
+  
+  successResponse(res, 200, 'Liste des clients récupérée.', { clients, pagination });
+});
+
 
 /**
  * @desc    Récupérer un client par son ID
  * @route   GET /api/clients/:id
  * @access  Private
  */
-exports.getClientById = async (req, res) => {
-  try {
-    const client = await Client.findById(req.params.id);
-    
-    if (!client) {
-      return res.status(404).json({ message: 'Client non trouvé.' });
-    }
-    
-    res.status(200).json(client);
-  } catch (error) {
-    console.error(`Erreur lors de la récupération du client ${req.params.id} :`, error);
-    res.status(500).json({ message: 'Erreur du serveur.', error: error.message });
+exports.getClientById = asyncHandler(async (req, res) => {
+  const client = await Client.findById(req.params.id);
+  if (!client) {
+    res.status(404);
+    throw new Error('Client non trouvé.');
   }
-};
+  successResponse(res, 200, 'Client trouvé.', client);
+});
+
 
 /**
  * @desc    Mettre à jour un client
  * @route   PUT /api/clients/:id
  * @access  Private (Admin, Commercial)
  */
-exports.updateClient = async (req, res) => {
-  try {
-    const updatedClient = await Client.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { 
-        new: true, // Retourne le document mis à jour
-        runValidators: true // Exécute les validations du modèle sur les nouvelles données
-      }
-    );
+exports.updateClient = asyncHandler(async (req, res) => {
+  const updatedClient = await Client.findByIdAndUpdate(
+    req.params.id,
+    req.body,
+    { new: true, runValidators: true }
+  );
 
-    if (!updatedClient) {
-      return res.status(404).json({ message: 'Client non trouvé.' });
-    }
-
-    res.status(200).json({
-        message: "Client mis à jour avec succès.",
-        data: updatedClient
-    });
-  } catch (error) {
-    console.error(`Erreur lors de la mise à jour du client ${req.params.id} :`, error);
-    res.status(400).json({ message: 'Erreur lors de la mise à jour du client.', error: error.message });
+  if (!updatedClient) {
+    res.status(404);
+    throw new Error('Client non trouvé.');
   }
-};
+  successResponse(res, 200, 'Client mis à jour avec succès.', updatedClient);
+});
+
 
 /**
- * @desc    Supprimer (désactiver) un client - Soft Delete
+ * @desc    Désactiver (soft delete) un client
  * @route   DELETE /api/clients/:id
- * @access  Private (Admin)
+ * @access  Private/Admin
  */
-exports.deleteClient = async (req, res) => {
-  try {
-    // Au lieu de supprimer le document, on met son statut 'isActive' à false.
-    // C'est une "suppression douce" (soft delete).
-    const client = await Client.findByIdAndUpdate(
-        req.params.id, 
-        { isActive: false },
-        { new: true }
-    );
+exports.deleteClient = asyncHandler(async (req, res) => {
+  const client = await Client.findById(req.params.id);
 
-    if (!client) {
-      return res.status(404).json({ message: 'Client non trouvé.' });
-    }
-    
-    res.status(200).json({ message: 'Client désactivé avec succès.' });
-  } catch (error) {
-    console.error(`Erreur lors de la suppression du client ${req.params.id} :`, error);
-    res.status(500).json({ message: 'Erreur du serveur lors de la suppression du client.', error: error.message });
+  if (!client) {
+    res.status(404);
+    throw new Error('Client non trouvé.');
   }
-};
+
+  if (!client.isActive) {
+      return successResponse(res, 200, 'Ce client est déjà désactivé.');
+  }
+
+  client.isActive = false;
+  await client.save();
+  
+  successResponse(res, 200, 'Client désactivé avec succès.');
+});

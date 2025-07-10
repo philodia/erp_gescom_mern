@@ -1,58 +1,68 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import api from '../../services/api'; // Notre instance Axios configurée
+import api from '../../services/api';
 
 // --- THUNKS ASYNCHRONES ---
-// Ces fonctions gèrent la communication avec l'API et déclenchent des actions
-// (pending, fulfilled, rejected) que notre slice va écouter.
 
-// Thunk pour RÉCUPÉRER tous les clients
+/**
+ * Thunk pour RÉCUPÉRER une page de clients.
+ * Accepte maintenant des arguments pour la pagination et la recherche.
+ * @param {object} [args] - Arguments { page, limit, search }.
+ */
 export const fetchClients = createAsyncThunk(
   'clients/fetchClients',
-  async (_, { rejectWithValue }) => {
+  async (args = {}, { rejectWithValue }) => {
     try {
-      const response = await api.get('/clients');
-      return response.data;
+      // Notre service API retourne maintenant directement les données.
+      const data = await api.get('/clients', { params: args });
+      return data; // Retourne l'objet complet { clients: [...], pagination: {...} }
     } catch (err) {
-      return rejectWithValue(err.response.data);
+      return rejectWithValue(err.response?.data?.message || 'Erreur de chargement des clients.');
     }
   }
 );
 
-// Thunk pour CRÉER un nouveau client
+/**
+ * Thunk pour CRÉER un nouveau client.
+ */
 export const addNewClient = createAsyncThunk(
   'clients/addNewClient',
   async (clientData, { rejectWithValue }) => {
     try {
-      const response = await api.post('/clients', clientData);
-      return response.data.data; // Notre API retourne { message, data }
+      const { data } = await api.post('/clients', clientData);
+      return data;
     } catch (err) {
-      return rejectWithValue(err.response.data);
+      return rejectWithValue(err.response?.data);
     }
   }
 );
 
-// Thunk pour METTRE À JOUR un client
+/**
+ * Thunk pour METTRE À JOUR un client.
+ */
 export const updateClient = createAsyncThunk(
   'clients/updateClient',
-  async ({ id, ...clientData }, { rejectWithValue }) => {
+  async (clientData, { rejectWithValue }) => {
+    const { _id, ...updateData } = clientData;
     try {
-      const response = await api.put(`/clients/${id}`, clientData);
-      return response.data.data; // Notre API retourne { message, data }
+      const { data } = await api.put(`/clients/${_id}`, updateData);
+      return data;
     } catch (err) {
-      return rejectWithValue(err.response.data);
+      return rejectWithValue(err.response?.data);
     }
   }
 );
 
-// Thunk pour SUPPRIMER (désactiver) un client
+/**
+ * Thunk pour SUPPRIMER (désactiver) un client.
+ */
 export const deleteClient = createAsyncThunk(
   'clients/deleteClient',
   async (clientId, { rejectWithValue }) => {
     try {
       await api.delete(`/clients/${clientId}`);
-      return clientId; // On retourne l'ID pour savoir qui supprimer de l'état local
+      return clientId;
     } catch (err) {
-      return rejectWithValue(err.response.data);
+      return rejectWithValue(err.response?.data);
     }
   }
 );
@@ -61,51 +71,57 @@ export const deleteClient = createAsyncThunk(
 // --- DÉFINITION DU SLICE ---
 const clientsSlice = createSlice({
   name: 'clients',
+  // --- État initial mis à jour ---
   initialState: {
     items: [],
+    pagination: {
+      total: 0,
+      limit: 10,
+      currentPage: 1,
+      totalPages: 1,
+    },
     status: 'idle', // 'idle' | 'loading' | 'succeeded' | 'failed'
     error: null,
   },
-  // Reducers synchrones (si nous en avions besoin)
   reducers: {},
-  // Reducers pour les actions asynchrones (générées par createAsyncThunk)
   extraReducers(builder) {
     builder
-      // Cas pour fetchClients
+      // --- Cas pour fetchClients mis à jour ---
       .addCase(fetchClients.pending, (state) => {
         state.status = 'loading';
       })
       .addCase(fetchClients.fulfilled, (state, action) => {
         state.status = 'succeeded';
-        state.items = action.payload; // Remplace la liste par celle du serveur
+        // Mettre à jour la liste des clients ET les informations de pagination
+        state.items = action.payload.clients;
+        state.pagination = action.payload.pagination;
       })
       .addCase(fetchClients.rejected, (state, action) => {
         state.status = 'failed';
-        state.error = action.payload.message || 'Erreur inconnue';
+        state.error = action.payload || 'Erreur inconnue';
       })
 
-      // Cas pour addNewClient
+      // --- Cas pour les autres thunks ---
       .addCase(addNewClient.fulfilled, (state, action) => {
-        state.items.unshift(action.payload); // Ajoute le nouveau client au début de la liste
+        // Ajoute le nouveau client au début et met à jour le total
+        state.items.unshift(action.payload);
+        state.pagination.total += 1;
       })
-      
-      // Cas pour updateClient
       .addCase(updateClient.fulfilled, (state, action) => {
         const updatedClient = action.payload;
-        const existingClientIndex = state.items.findIndex(client => client._id === updatedClient._id);
-        if (existingClientIndex !== -1) {
-          state.items[existingClientIndex] = updatedClient; // Remplace l'ancien client par le nouveau
+        const index = state.items.findIndex(client => client._id === updatedClient._id);
+        if (index !== -1) {
+          state.items[index] = updatedClient;
         }
       })
-      
-      // Cas pour deleteClient
       .addCase(deleteClient.fulfilled, (state, action) => {
         const clientId = action.payload;
-        // Filtre la liste pour enlever le client supprimé
+        // Filtre la liste et met à jour le total
         state.items = state.items.filter(client => client._id !== clientId);
+        state.pagination.total -= 1;
       });
   }
 });
 
-// Exporter le reducer généré par le slice
+// Exporter les actions et le reducer
 export default clientsSlice.reducer;

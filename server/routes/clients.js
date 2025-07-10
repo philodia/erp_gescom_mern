@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-// 1. Importer les fonctions du contrôleur des clients
+// 1. Importer les fonctions du contrôleur
 const {
   createClient,
   getAllClients,
@@ -10,13 +10,13 @@ const {
   deleteClient,
 } = require('../controllers/clientController');
 
-// 2. Importer les middlewares de sécurité
+// 2. Importer les middlewares
 const { protect, authorize } = require('../middleware/auth');
+const { clientValidationRules, idParamValidationRules, validate } = require('../middleware/validation');
+const { ROLES } = require('../utils/constants');
 
 
 // 3. Appliquer le middleware 'protect' à TOUTES les routes de ce fichier.
-//    Toute requête vers une URL commençant par /api/clients nécessitera un token valide.
-//    C'est plus concis que de l'ajouter à chaque route individuellement.
 router.use(protect);
 
 
@@ -24,17 +24,22 @@ router.use(protect);
 router.route('/')
   /**
    * @route   GET /api/clients
-   * @desc    Récupérer la liste de tous les clients actifs.
-   * @access  Private (accessible à tous les rôles une fois connectés)
+   * @desc    Récupérer la liste de tous les clients (avec pagination/recherche).
+   * @access  Private
    */
   .get(getAllClients)
   
   /**
    * @route   POST /api/clients
    * @desc    Créer un nouveau client.
-   * @access  Private (réservé aux Admins et Commerciaux)
+   * @access  Private (Admin, Commercial)
    */
-  .post(authorize('Admin', 'Commercial'), createClient);
+  .post(
+    authorize(ROLES.ADMIN, ROLES.COMMERCIAL), 
+    clientValidationRules(), // Valider les données du corps de la requête
+    validate, 
+    createClient
+  );
 
 
 // 5. Définir les routes pour les URLs spécifiques à un client ('/:id')
@@ -42,23 +47,38 @@ router.route('/:id')
   /**
    * @route   GET /api/clients/:id
    * @desc    Récupérer les détails d'un client spécifique.
-   * @access  Private (accessible à tous les rôles)
+   * @access  Private
    */
-  .get(getClientById)
+  .get(
+    idParamValidationRules(), // Valider que l'ID est un MongoID valide
+    validate,
+    getClientById
+  )
   
   /**
    * @route   PUT /api/clients/:id
    * @desc    Mettre à jour un client.
-   * @access  Private (réservé aux Admins et Commerciaux)
+   * @access  Private (Admin, Commercial)
    */
-  .put(authorize('Admin', 'Commercial'), updateClient)
+  .put(
+    authorize(ROLES.ADMIN, ROLES.COMMERCIAL),
+    idParamValidationRules(),
+    clientValidationRules(), // Valide aussi le corps de la requête de mise à jour
+    validate,
+    updateClient
+  )
   
   /**
    * @route   DELETE /api/clients/:id
    * @desc    Désactiver (soft delete) un client.
-   * @access  Private (réservé aux Admins)
+   * @access  Private (Admin)
    */
-  .delete(authorize('Admin'), deleteClient);
+  .delete(
+    authorize(ROLES.ADMIN),
+    idParamValidationRules(),
+    validate,
+    deleteClient
+  );
 
 
 // 6. Exporter le routeur
